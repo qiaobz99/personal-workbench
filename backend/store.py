@@ -140,6 +140,50 @@ def search_fts(query: str, limit: int = 50):
     return [dict(r) for r in rows]
 
 
+def search_substring(query: str, limit: int = 50):
+    """Chinese-friendly fallback.
+
+    FTS5's default ``unicode61`` tokenizer does not split CJK text, so short
+    phrases that are not standalone tokens (e.g. 甬兴, 背调) miss. We scan the
+    indexed documents in Python and keep those whose content contains every
+    whitespace-separated term — reliable for any-length CJK substrings.
+    """
+    terms = [t for t in re.split(r"\s+", query.strip()) if t]
+    if not terms:
+        return []
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT path, title, content, mtime FROM docs"
+    ).fetchall()
+    conn.close()
+    results = []
+    for r in rows:
+        content = r["content"] or ""
+        if not all(t in content for t in terms):
+            continue
+        idx = content.find(terms[0])
+        start = max(0, idx - 40)
+        end = min(len(content), idx + len(terms[0]) + 80)
+        snip = content[start:end].replace("\n", " ")
+        for t in terms:
+            snip = snip.replace(t, "<mark>" + t + "</mark>")
+        if start > 0:
+            snip = "…" + snip
+        if end < len(content):
+            snip = snip + "…"
+        results.append(
+            {
+                "path": r["path"],
+                "title": r["title"],
+                "snippet": snip,
+                "mtime": r["mtime"],
+            }
+        )
+        if len(results) >= limit:
+            break
+    return results
+
+
 # --------------------------------------------------------------------------
 # Tasks (kanban)
 # --------------------------------------------------------------------------

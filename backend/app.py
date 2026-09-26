@@ -126,14 +126,16 @@ class Handler(BaseHTTPRequestHandler):
             if not q:
                 return _send_json(self, {"query": q, "results": []})
             fts = store.search_fts(q, limit=50)
+            sub = store.search_substring(q, limit=50)
             sem = []
             if chroma_client.is_available():
                 sem = chroma_client.semantic_search(q, n=10)
-            # Merge: dedupe by path, semantic results first, then tag provenance
-            # so the UI can show an FTS5 / 语义 badge.
+            # Merge: semantic first, then FTS5, then a CJK substring fallback.
+            # Dedupe by path; the fallback recovers short CJK phrases that the
+            # default FTS5 tokenizer cannot split. Tag provenance for the UI.
             seen = set()
             merged = []
-            for r in sem + fts:
+            for r in sem + fts + sub:
                 p = r.get("path")
                 if p in seen:
                     continue
