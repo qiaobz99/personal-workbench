@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local KB Workbench · 本地知识库工作台</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235e6ad2'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>K</text></svg>" />
+</head>
+<body>
+  <div id="app" v-cloak>
+
+    <!-- ============================ SIDEBAR ============================ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">K</div>
+        <div>
+          <div class="brand-name">KB Workbench</div>
+          <div class="brand-sub">本地知识库 · 工作台</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-label">工作区</div>
+        <div class="nav-item" :class="{active: view==='dashboard'}" @click="nav('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>概览</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='knowledge'}" @click="nav('knowledge')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v16H6a2 2 0 0 0-2 2z"/><path d="M20 5a2 2 0 0 0-2-2h-6v16h6a2 2 0 0 1 2 2z"/></svg>
+          <span>知识库</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='search'}" @click="nav('search')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span>检索</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='tasks'}" @click="nav('tasks')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="10" y="3" width="5" height="18" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></svg>
+          <span>任务看板</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='reports'}" @click="nav('reports')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+          <span>日报 / 周报</span>
+        </div>
+
+        <div class="nav-label">知识分区</div>
+        <div class="nav-item" :class="{active: view==='knowledge' && kbRoot==='learn/ai'}" @click="nav('knowledge','learn/ai')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>
+          <span>AI 学习</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='knowledge' && kbRoot==='interview'}" @click="nav('knowledge','interview')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+          <span>面试准备</span>
+        </div>
+
+        <div class="nav-label">系统</div>
+        <div class="nav-item" :class="{active: view==='settings'}" @click="nav('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V1a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1H23a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+          <span>设置</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="semantic-pill">
+          <span class="dot" :class="config.semantic_available ? 'on':'off'"></span>
+          <span v-if="config.semantic_available">语义检索已启用 (Chroma)</span>
+          <span v-else>语义检索未启用 · 仅全文</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============================ MAIN ============================ -->
+    <div class="main">
+      <header class="topbar">
+        <h1>{{ pageTitle }}<span class="crumb" v-if="crumb"> · {{ crumb }}</span></h1>
+        <div class="global-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input v-model="topSearch" @keyup.enter="goSearch" placeholder="全局检索笔记…" />
+          <kbd>↵</kbd>
+        </div>
+        <button class="icon-btn" @click="toggleTheme" :title="theme==='dark'?'切换浅色':'切换深色'">
+          <svg v-if="theme==='dark'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+        </button>
+      </header>
+
+      <div class="content">
+
+        <!-- ===================== DASHBOARD ===================== -->
+        <section v-if="view==='dashboard'">
+          <p class="greeting">{{ greeting }}，乔工 👋</p>
+          <p class="greeting-sub">{{ stats.today }} · 你的本地知识库与工作台一切就绪</p>
+
+          <div class="stat-grid">
+            <div class="stat-card feature">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div>
+              <div class="stat-num">{{ stats.total_docs }}</div>
+              <div class="stat-lbl">已索引笔记</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="stat-num">{{ stats.recent_this_week }}</div>
+              <div class="stat-lbl">本周新增 / 修改</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></div>
+              <div class="stat-num">{{ stats.task_counts ? stats.task_counts.todo : 0 }}</div>
+              <div class="stat-lbl">待办任务</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+              <div class="stat-num">{{ stats.task_counts ? stats.task_counts.done : 0 }}</div>
+              <div class="stat-lbl">已完成</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <p class="card-title">最近更新</p>
+              <div v-if="recentFiles.length===0" class="empty-state">暂无文件</div>
+              <div class="recent-item" v-for="f in recentFiles" :key="f.path" @click="openFile(f.path)">
+                <svg class="ri-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>
+                <div>
+                  <div class="ri-name">{{ f.name }}</div>
+                  <div class="ri-path">{{ f.path }}</div>
+                </div>
+                <span class="ri-time">{{ f.rel }}</span>
+              </div>
+            </div>
+            <div class="card">
+              <p class="card-title">快捷操作</p>
+              <div class="quick-grid">
+                <div class="quick-btn" @click="nav('knowledge')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> 新建笔记</div>
+                <div class="quick-btn" @click="nav('search')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> 检索知识</div>
+                <div class="quick-btn" @click="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></svg> 管理任务</div>
+                <div class="quick-btn" @click="nav('reports')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M9 13h6M9 17h6"/></svg> 生成周报</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== KNOWLEDGE ===================== -->
+        <section v-if="view==='knowledge'">
+          <div class="kb-layout">
+            <div class="tree">
+              <div class="tree-root">
+                <tree-node :node="tree" :depth="0" :sel="selectedFile" @select="onTreeSelect" @open="openFile"></tree-node>
+              </div>
+            </div>
+            <div class="editor-pane" v-if="selectedFile">
+              <div style="grid-column:1 / -1; display:flex; flex-direction:column; height:100%;">
+                <div class="editor-tools">
+                  <span class="crumb">{{ selectedFile }}</span>
+                  <button class="btn btn-sm btn-ghost" @click="newFile">＋ 新建</button>
+                  <button class="btn btn-sm btn-primary" @click="saveFile" :disabled="saving">保存</button>
+                  <button class="btn btn-sm btn-danger" @click="deleteFile">删除</button>
+                </div>
+                <div class="editor-split">
+                  <textarea v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
+                  <div class="preview md" v-html="previewHtml"></div>
+                </div>
+              </div>
+            </div>
+            <div class="editor-pane" v-else style="display:grid; place-items:center;">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+                <div>从左侧选择或新建一个笔记</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== SEARCH ===================== -->
+        <section v-if="view==='search'">
+          <div class="search-wrap">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input v-model="searchQuery" @input="debouncedSearch" @keyup.enter="doSearch" placeholder="输入关键词，回车检索（FTS5 全文 + 可选语义）" autofocus />
+            </div>
+            <div v-if="searchResults.length" style="margin-top:14px; color:var(--text-subtle); font-size:12.5px;">
+              共 {{ searchResults.length }} 条结果
+            </div>
+            <div v-if="searchResults.length===0 && searched" class="empty-state">没有匹配「{{ searchQuery }}」的笔记</div>
+            <div class="result" v-for="r in searchResults" :key="r.path" @click="openFile(r.path)">
+              <div class="r-head">
+                <span class="r-title">{{ r.title || r.path }}</span>
+                <span class="badge fts" v-if="r.fromSemantic!==true">FTS5</span>
+                <span class="badge sem" v-if="r.fromSemantic===true">语义</span>
+                <span class="r-path">{{ r.path }}</span>
+              </div>
+              <div class="r-snip md" v-html="r.snippet || '(无摘要)'"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== TASKS ===================== -->
+        <section v-if="view==='tasks'">
+          <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <input class="input" style="max-width:360px;" v-model="newTaskTitle" @keyup.enter="addTask" placeholder="添加任务，回车创建…" />
+            <button class="btn btn-primary" @click="addTask">＋ 添加</button>
+          </div>
+          <div class="kanban">
+            <div class="kcol todo" :class="{dragover: dragOver==='todo'}" @dragover.prevent="dragOver='todo'" @dragleave="dragOver=null" @drop="dropTask('todo')">
+              <div class="kcol-head"><span class="kdot"></span> 待办 <span class="kcount">{{ colTasks('todo').length }}</span></div>
+              <div class="kcard" v-for="t in colTasks('todo')" :key="t.id" draggable="true" @dragstart="dragId=t.id">
+                <div class="kc-title">{{ t.title }}</div>
+                <div class="kc-meta">
+                  <span class="badge" :class="'prio-'+t.priority">{{ prioLabel(t.priority) }}</span>
+                  <span class="badge" v-if="t.tags">{{ t.tags }}</span>
+                </div>
+                <div class="kc-actions">
+                  <button class="btn btn-sm btn-ghost" @click="cycleStatus(t,'doing')">→ 进行中</button>
+                  <button class="btn btn-sm btn-danger" @click="delTask(t.id)">删除</button>
+                </div>
+              </div>
+            </div>
+            <div class="kcol doing" :class="{dragover: dragOver==='doing'}" @dragover.prevent="dragOver='doing'" @dragleave="dragOver=null" @drop="dropTask('doing')">
+              <div class="kcol-head"><span class="kdot"></span> 进行中 <span class="kcount">{{ colTasks('doing').length }}</span></div>
+              <div class="kcard" v-for="t in colTasks('doing')" :key="t.id" draggable="true" @dragstart="dragId=t.id">
+                <div class="kc-title">{{ t.title }}</div>
+                <div class="kc-meta">
+                  <span class="badge" :class="'prio-'+t.priority">{{ prioLabel(t.priority) }}</span>
+                  <span class="badge" v-if="t.tags">{{ t.tags }}</span>
+                </div>
+                <div class="kc-actions">
+                  <button class="btn btn-sm btn-ghost" @click="cycleStatus(t,'done')">→ 完成</button>
+                  <button class="btn btn-sm btn-ghost" @click="cycleStatus(t,'todo')">← 待办</button>
+                  <button class="btn btn-sm btn-danger" @click="delTask(t.id)">删除</button>
+                </div>
+              </div>
+            </div>
+            <div class="kcol done" :class="{dragover: dragOver==='done'}" @dragover.prevent="dragOver='done'" @dragleave="dragOver=null" @drop="dropTask('done')">
+              <div class="kcol-head"><span class="kdot"></span> 已完成 <span class="kcount">{{ colTasks('done').length }}</span></div>
+              <div class="kcard" v-for="t in colTasks('done')" :key="t.id" draggable="true" @dragstart="dragId=t.id">
+                <div class="kc-title" style="text-decoration:line-through; opacity:.7;">{{ t.title }}</div>
+                <div class="kc-meta">
+                  <span class="badge success">done</span>
+                  <span class="badge" v-if="t.tags">{{ t.tags }}</span>
+                </div>
+                <div class="kc-actions">
+                  <button class="btn btn-sm btn-ghost" @click="cycleStatus(t,'todo')">↺ 重开</button>
+                  <button class="btn btn-sm btn-danger" @click="delTask(t.id)">删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== REPORTS ===================== -->
+        <section v-if="view==='reports'">
+          <div class="report-head">
+            <div class="seg">
+              <button :class="{active: reportType==='daily'}" @click="setReport('daily')">日报</button>
+              <button :class="{active: reportType==='weekly'}" @click="setReport('weekly')">周报</button>
+            </div>
+            <input class="input" style="max-width:200px;" type="date" v-model="reportDate" @change="loadReport" />
+            <button class="btn btn-primary" @click="loadReport">生成</button>
+          </div>
+
+          <div v-if="reportData" class="card">
+            <p class="card-title">
+              {{ reportType==='daily' ? '每日报告' : '每周报告' }} ·
+              {{ reportType==='daily' ? reportData.date : (reportData.week_start + ' ~ ' + reportData.week_end) }}
+            </p>
+
+            <div v-if="reportType==='daily' && reportData.daily_note" class="md" style="margin-bottom:18px;" v-html="md(reportData.daily_note)"></div>
+
+            <div class="report-section">
+              <h3>📝 新增文件 <span class="badge accent">{{ reportData.created.length }}</span></h3>
+              <span class="file-chip" v-for="p in reportData.created" :key="p" @click="openFile(p)">{{ p }}</span>
+              <div v-if="!reportData.created.length" style="color:var(--text-subtle);">无</div>
+            </div>
+            <div class="report-section">
+              <h3>✏️ 修改文件 <span class="badge">{{ reportData.modified.length }}</span></h3>
+              <span class="file-chip" v-for="p in reportData.modified" :key="p" @click="openFile(p)">{{ p }}</span>
+              <div v-if="!reportData.modified.length" style="color:var(--text-subtle);">无</div>
+            </div>
+            <div class="report-section">
+              <h3>✅ 任务 <span class="badge success">{{ reportData.task_counts.done }}</span> / <span class="badge">{{ reportData.task_counts.doing }}</span> / <span class="badge">{{ reportData.task_counts.todo }}</span></h3>
+              <div style="font-size:13px; color:var(--text-muted);">已完成 {{ reportData.task_counts.done }} · 进行中 {{ reportData.task_counts.doing }} · 待办 {{ reportData.task_counts.todo }}</div>
+            </div>
+          </div>
+          <div v-else class="empty-state">选择日期并点击「生成」</div>
+        </section>
+
+        <!-- ===================== SETTINGS ===================== -->
+        <section v-if="view==='settings'">
+          <div class="card" style="max-width:680px;">
+            <p class="card-title">运行信息</p>
+            <div class="setting-row"><span class="sk">应用</span><span class="sv">{{ config.app }} v{{ config.version }}</span></div>
+            <div class="setting-row"><span class="sk">知识库目录</span><span class="sv">{{ config.vault_dir }}</span></div>
+            <div class="setting-row"><span class="sk">服务端口</span><span class="sv">{{ config.port }}</span></div>
+            <div class="setting-row"><span class="sk">嵌入模型</span><span class="sv">{{ config.embedding_model }}</span></div>
+            <div class="setting-row"><span class="sk">语义检索 (Chroma)</span><span class="sv">{{ config.semantic_available ? '已启用' : '未启用（仅全文）' }}</span></div>
+            <div class="setting-row"><span class="sk">主题</span>
+              <span class="theme-switch">
+                <button :class="{active: theme==='dark'}" @click="setTheme('dark')">深色</button>
+                <button :class="{active: theme==='light'}" @click="setTheme('light')">浅色</button>
+              </span>
+            </div>
+            <div class="setting-row" style="border:none;">
+              <span class="sk">维护</span>
+              <button class="btn btn-primary btn-sm" @click="reindex" :disabled="reindexing">重建索引</button>
+            </div>
+          </div>
+          <div class="card" style="max-width:680px; margin-top:16px;">
+            <p class="card-title">关于</p>
+            <p style="color:var(--text-muted); font-size:13px; margin:0;">
+              本地优先（local-first）的知识库 + 工作台。Vault（Markdown）为唯一真相源，后端零依赖（Python 标准库），
+              FTS5 全文检索，可选 Chroma 语义检索。完全离线、数据自持，适合自用与作为 AI 应用作品集。
+            </p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ===================== NEW FILE MODAL ===================== -->
+    <div class="modal-mask" v-if="showNewModal" @click.self="showNewModal=false">
+      <div class="modal">
+        <h3>新建笔记</h3>
+        <div class="field">
+          <label>所在目录</label>
+          <input class="input" v-model="newFileDir" placeholder="如 work/247-conversion" />
+        </div>
+        <div class="field">
+          <label>文件名（含 .md）</label>
+          <input class="input" v-model="newFileName" placeholder="my-note.md" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" @click="showNewModal=false">取消</button>
+          <button class="btn btn-primary" @click="confirmNewFile">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" :class="toastType" v-if="toastMsg">{{ toastMsg }}</div>
+  </div>
+
+  <script src="/vendor/vue.global.prod.js"></script>
+  <script src="/vendor/marked.umd.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
