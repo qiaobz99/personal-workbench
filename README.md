@@ -78,8 +78,11 @@ python backend/app.py
 # 或者双击 start.bat (Windows) / 运行 ./start.sh (macOS/Linux)
 
 # 浏览器打开
-http://localhost:8080
+http://localhost:17321
 ```
+
+> 端口默认 **17321**（刻意避开 3000 / 5000 / 8000 / 8080 / 8888 这些被各种开发工具抢占的端口）。
+> 要换端口：设环境变量 `KB_PORT` 即可，如 `KB_PORT=9001 python backend/app.py`。
 
 首次启动会自动建立全文索引。仓库自带 `vault.sample/` 示例内容，可先复制成你的 `vault/`：
 

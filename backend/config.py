@@ -33,8 +33,10 @@ EMBEDDING_MODEL = os.environ.get("KB_EMBED_MODEL", "BAAI/bge-m3")
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
 # --- HTTP server ----------------------------------------------------------
+# Deliberately NOT 3000/5000/8000/8080/8888 — those are the ports every other
+# dev tool grabs, which caused avoidable "address already in use" collisions.
 HOST = os.environ.get("KB_HOST", "0.0.0.0")
-PORT = int(os.environ.get("KB_PORT", "8080"))
+PORT = int(os.environ.get("KB_PORT", "17321"))
 
 # --- Misc -----------------------------------------------------------------
 APP_NAME = "Local KB Workbench"

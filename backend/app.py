@@ -8,7 +8,8 @@ A tiny, dependency-free web server (Python standard library only) that:
   store (FTS5 full-text index + kanban tasks),
 * optionally uses Chroma for semantic search when it is installed.
 
-Run:  ``python backend/app.py``  then open  http://localhost:8080
+Run:  ``python backend/app.py``  then open  http://localhost:17321
+      (override the port with the ``KB_PORT`` environment variable)
 """
 import json
 import os
