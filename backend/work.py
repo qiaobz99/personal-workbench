@@ -428,13 +428,33 @@ def list_items(type=None, project=None, status=None, q=None):
     return items
 
 
+def _proj_sort_key(name: str):
+    """新版本排前面：正式版本 > 补丁批次 > 其他，组内按数字倒序。
+
+    ``12版本开发`` 排在 ``11版本开发`` 之前；``0828补丁开发`` 排在
+    ``0818补丁开发`` 之前；同一版本的子目录（``12版本开发-指标``）紧随其主
+    版本。下划线开头的（``_归档`` / ``_inbox``）不入列表，天然垫底。
+    """
+    if "版本" in name:
+        grp = 0
+    elif "补丁" in name:
+        grp = 1
+    else:
+        grp = 2
+    nums = re.findall(r"\d+", name)
+    num = int(nums[0]) if nums else 0
+    sub = 1 if grp == 0 and "-" in name.split("版本", 1)[-1] else 0
+    return (grp, -num, sub, name)
+
+
 def projects():
     root = work_root()
     if not os.path.isdir(root):
         return []
     return sorted(
-        d for d in os.listdir(root)
-        if os.path.isdir(os.path.join(root, d)) and not d.startswith("_")
+        (d for d in os.listdir(root)
+         if os.path.isdir(os.path.join(root, d)) and not d.startswith("_")),
+        key=_proj_sort_key,
     )
 
 
