@@ -44,6 +44,7 @@ def reindex() -> dict:
     fts = 0
     semantic = 0
     semantic_on = chroma_client.is_available()
+    seen = set()
 
     for dirpath, dirnames, filenames in os.walk(root):
         # Skip hidden / cache dirs.
@@ -61,12 +62,17 @@ def reindex() -> dict:
             title = _title(content, rel)
             mtime = int(os.path.getmtime(abs_path))
             store.upsert_doc(rel, title, content, mtime)
+            seen.add(rel)
             fts += 1
             if semantic_on and chroma_client.index_doc(rel, title, content):
                 semantic += 1
+
+    # Upsert alone leaves rows for files that were deleted / renamed / moved.
+    pruned = store.prune_docs(seen)
 
     return {
         "indexed_fts": fts,
         "indexed_semantic": semantic,
         "semantic_available": semantic_on,
+        "pruned_stale": pruned,
     }

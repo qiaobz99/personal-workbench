@@ -93,6 +93,24 @@ def delete_doc(path: str) -> None:
     conn.close()
 
 
+def prune_docs(keep_paths) -> int:
+    """Drop index rows whose file is gone (deleted, renamed or moved).
+
+    ``reindex()`` only upserts, so without this a renamed file leaves its old
+    path behind forever -- search would keep returning dead paths and stale
+    titles. Returns the number of rows removed.
+    """
+    keep = set(keep_paths)
+    conn = get_conn()
+    rows = conn.execute("SELECT path FROM docs").fetchall()
+    stale = [r["path"] for r in rows if r["path"] not in keep]
+    if stale:
+        conn.executemany("DELETE FROM docs WHERE path = ?", [(p,) for p in stale])
+        conn.commit()
+    conn.close()
+    return len(stale)
+
+
 def count_docs() -> int:
     conn = get_conn()
     n = conn.execute("SELECT count(*) FROM docs").fetchone()[0]
