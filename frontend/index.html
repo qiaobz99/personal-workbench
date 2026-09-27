@@ -43,6 +43,32 @@
           <span>日报 / 周报</span>
         </div>
 
+        <div class="nav-label">日常工作</div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='overview'}" @click="navWork('overview')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>总览</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='requirement'}" @click="navWork('requirement')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1.2"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg>
+          <span>需求</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='design'}" @click="navWork('design')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+          <span>设计</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='dev'}" @click="navWork('dev')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6l-5 6 5 6"/><path d="M16 6l5 6-5 6"/></svg>
+          <span>开发</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='bug'}" @click="navWork('bug')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"/><path d="M12 7V4M9 3l1.6 2.2M15 3l-1.6 2.2M6.2 10L3 8.2M6.2 16L3 17.8M17.8 10L21 8.2M17.8 16L21 17.8"/></svg>
+          <span>Bug</span>
+        </div>
+        <div class="nav-item" :class="{active: view==='work' && workTab==='convention'}" @click="navWork('convention')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V7z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>约定</span>
+        </div>
+
         <div class="nav-label">知识分区</div>
         <div class="nav-item" :class="{active: view==='knowledge' && kbRoot==='learn/ai'}" @click="nav('knowledge','learn/ai')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>
@@ -84,11 +110,11 @@
         </button>
       </header>
 
-      <div class="content" :class="{ 'kb-view': view==='knowledge' }">
+      <div class="content" :class="{ 'kb-view': kbViewClass }">
 
         <!-- ===================== DASHBOARD ===================== -->
         <section v-if="view==='dashboard'">
-          <p class="greeting">{{ greeting }}，乔工 👋</p>
+          <p class="greeting">{{ greeting }} 👋</p>
           <p class="greeting-sub">{{ stats.today }} · 你的本地知识库与工作台一切就绪</p>
 
           <div class="stat-grid">
@@ -104,13 +130,25 @@
             </div>
             <div class="stat-card">
               <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></div>
-              <div class="stat-num">{{ stats.task_counts ? stats.task_counts.todo : 0 }}</div>
-              <div class="stat-lbl">待办任务</div>
+              <div class="stat-num">{{ stats.task_counts ? (stats.task_counts.todo + (stats.task_counts.doing || 0)) : 0 }}</div>
+              <div class="stat-lbl">未完成任务</div>
             </div>
             <div class="stat-card">
               <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
               <div class="stat-num">{{ stats.task_counts ? stats.task_counts.done : 0 }}</div>
               <div class="stat-lbl">已完成</div>
+            </div>
+          </div>
+
+          <div class="card" v-if="openTasks.length" style="margin-bottom:16px;">
+            <p class="card-title" style="display:flex; align-items:center; gap:8px;">
+              我的待办 <span class="badge accent">{{ openTasks.length }}</span>
+              <span class="badge" style="margin-left:auto; cursor:pointer;" @click="nav('tasks')">任务看板 →</span>
+            </p>
+            <div class="recent-item" v-for="t in openTasks" :key="t.id" @click="nav('tasks')">
+              <span class="badge" :class="{ warn: t.status==='doing' }" style="flex:none;">{{ t.status==='doing' ? '进行中' : '待办' }}</span>
+              <div class="ri-body"><div class="ri-name">{{ t.title }}</div></div>
+              <span class="ri-time">{{ prioLabel(t.priority) }}优先级</span>
             </div>
           </div>
 
@@ -144,7 +182,7 @@
           <div class="kb-layout">
             <div class="tree">
               <div class="tree-root">
-                <tree-node :node="tree" :depth="0" :sel="selectedFile" @select="onTreeSelect" @open="openFile"></tree-node>
+                <tree-node :node="displayTree" :depth="0" :sel="selectedFile" @select="onTreeSelect" @open="openFile"></tree-node>
               </div>
             </div>
             <div class="editor-pane" v-if="selectedFile">
@@ -160,7 +198,7 @@
               </div>
               <div class="editor-split" :class="{ reading: editorMode==='read' }">
                 <textarea v-show="editorMode==='edit'" v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
-                <div class="preview md" v-html="previewHtml"></div>
+                <div class="preview md" v-show="editorMode==='read'" v-html="previewHtml"></div>
               </div>
             </div>
             <div class="editor-pane" v-else style="display:grid; place-items:center;">
@@ -285,6 +323,218 @@
           <div v-else class="empty-state">选择日期并点击「生成」</div>
         </section>
 
+        <!-- ===================== WORK · OVERVIEW ===================== -->
+        <section v-if="view==='work' && workTab==='overview'">
+          <p class="greeting">日常工作</p>
+          <p class="greeting-sub">需求 → 设计 → 开发 → Bug 一条链走完，进度留在文件里</p>
+
+          <div class="stat-grid">
+            <div class="stat-card feature">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>
+              <div class="stat-num">{{ workBoard.active_count || 0 }}</div>
+              <div class="stat-lbl">进行中工作项</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v16h16"/><path d="M8 15l3-4 3 3 4-6"/></svg></div>
+              <div class="stat-num">{{ workBoard.week_entry_count || 0 }}</div>
+              <div class="stat-lbl">本周进展记录</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg></div>
+              <div class="stat-num">{{ workBoard.closed_this_week || 0 }}</div>
+              <div class="stat-lbl">本周关闭 Bug</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l9 16H3z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+              <div class="stat-num">{{ workBoard.stuck_count || 0 }}</div>
+              <div class="stat-lbl">卡点 / 受阻</div>
+            </div>
+          </div>
+
+          <div class="work-kind-row">
+            <div class="kind-chip" v-for="k in workKindChips" :key="k.type" @click="navWork(k.type)">
+              <span class="kc-num">{{ k.count }}</span>
+              <span class="kc-lbl">{{ k.label }}</span>
+            </div>
+            <div class="kind-chip add" @click="openWorkCreate">＋ 新建工作项</div>
+            <div class="kind-chip add" @click="openWorkImport">↧ 导入历史文档</div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <p class="card-title">进行中 <span class="badge accent">{{ (workBoard.active || []).length }}</span></p>
+              <div v-if="!(workBoard.active || []).length" class="empty-state" style="padding:24px 0;">暂无进行中的工作项</div>
+              <div class="recent-item" v-for="it in workBoard.active" :key="it.path" @click="openWork(it)">
+                <span class="badge" :class="statusBadge(it.status)" style="flex:none;">{{ statusLabel(it.status) }}</span>
+                <div class="ri-body">
+                  <div class="ri-name">{{ it.title }}</div>
+                  <div class="ri-path">{{ it.id }} · {{ typeLabel(it.type) }}</div>
+                </div>
+                <span class="ri-time">{{ it.last_activity.date || '' }}</span>
+              </div>
+            </div>
+            <div class="card">
+              <p class="card-title">本周进展</p>
+              <div v-if="!(workBoard.entries || []).length" class="empty-state" style="padding:24px 0;">本周还没有进展记录</div>
+              <div class="tl-item" v-for="(e, i) in workBoard.entries" :key="i" @click="openWork(e)">
+                <span class="tl-dot"></span>
+                <div class="tl-body">
+                  <div class="tl-text">{{ e.text }}</div>
+                  <div class="tl-meta">{{ e.id }} · {{ e.date }} {{ e.time }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== WORK · LIST + DETAIL ===================== -->
+        <section v-if="view==='work' && workTab!=='overview' && workTab!=='convention'">
+          <div class="work-layout">
+            <div class="work-list">
+              <div class="work-list-head">
+                <button class="btn btn-sm btn-primary" @click="openWorkCreate">＋ 新建</button>
+                <button class="btn btn-sm btn-ghost" @click="openWorkImport">导入</button>
+              </div>
+              <div class="work-list-filter">
+                <input class="input" v-model="workFilterQ" placeholder="筛选标题 / 编号 / 标签…" />
+              </div>
+              <div class="work-groups">
+                <template v-for="g in groupedWork" :key="g.name">
+                  <div class="work-group-h">{{ g.name }}<span class="badge">{{ g.items.length }}</span></div>
+                  <div class="work-item" v-for="it in g.items" :key="it.path"
+                       :class="{ sel: it.path === workSel }" @click="selectWork(it.path)">
+                    <span class="wi-dot" :class="'st-' + it.status"></span>
+                    <div class="wi-body">
+                      <div class="wi-title">{{ it.title }}</div>
+                      <div class="wi-meta">
+                        <span class="wi-id">{{ it.id }}</span>
+                        <span class="badge" :class="statusBadge(it.status)">{{ statusLabel(it.status) }}</span>
+                        <span class="badge danger" v-if="it.severity">{{ severityLabel(it.severity) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <div v-if="!groupedWork.length" class="empty-state" style="padding:30px 10px;">
+                  还没有条目<br />点左上角「＋ 新建」
+                </div>
+              </div>
+            </div>
+
+            <div class="work-detail" v-if="workItem">
+              <div class="wd-head">
+                <div class="wd-head-main">
+                  <div class="wd-id">
+                    <span>{{ workItem.id }}</span>
+                    <span class="badge accent">{{ typeLabel(workItem.type) }}</span>
+                    <span class="badge danger" v-if="workItem.verdict">{{ workItem.verdict }}</span>
+                    <span class="badge" v-else-if="!workItem.has_frontmatter">未结构化</span>
+                  </div>
+                  <input class="wd-title" v-model="workTitle" @change="saveWorkTitle" />
+                </div>
+                <div class="wd-actions">
+                  <div class="seg">
+                    <button :class="{ active: workRead }" @click="workRead = true">阅读</button>
+                    <button :class="{ active: !workRead }" @click="workRead = false">编辑</button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" @click="saveWorkBody" :disabled="workSaving || workRead">保存正文</button>
+                  <button class="btn btn-sm btn-danger" @click="deleteWork">删除</button>
+                </div>
+              </div>
+
+              <div class="wd-fields">
+                <div class="wd-f">
+                  <label>状态</label>
+                  <select class="input" :value="workItem.status" @change="setWorkStatus($event.target.value)">
+                    <option v-for="s in statusOptions(workItem.type)" :key="s" :value="s">{{ statusLabel(s) }}</option>
+                  </select>
+                </div>
+                <div class="wd-f">
+                  <label>优先级</label>
+                  <select class="input" :value="workItem.priority" @change="saveWorkFields({ priority: $event.target.value })">
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                  </select>
+                </div>
+                <div class="wd-f">
+                  <label>项目 / 归属</label>
+                  <input class="input" v-model="workProject" @change="saveWorkFields({ project: workProject })" />
+                </div>
+                <div class="wd-f wd-f-grow">
+                  <label>标签</label>
+                  <input class="input" v-model="workTags" @change="saveWorkFields({ tags: workTags })" placeholder="逗号分隔" />
+                </div>
+                <template v-if="workItem.type === 'bug'">
+                  <div class="wd-f">
+                    <label>严重度</label>
+                    <select class="input" :value="workItem.severity" @change="saveWorkFields({ severity: $event.target.value })">
+                      <option value="">未定</option>
+                      <option v-for="s in severityOptions" :key="s.value" :value="s.value">{{ s.label }}</option>
+                    </select>
+                  </div>
+                  <div class="wd-f">
+                    <label>定性</label>
+                    <select class="input" :value="workItem.verdict" @change="saveWorkFields({ verdict: $event.target.value })">
+                      <option value="">未定性</option>
+                      <option value="缺陷">缺陷</option>
+                      <option value="需求变更">需求变更</option>
+                    </select>
+                  </div>
+                </template>
+                <div class="wd-f">
+                  <label>来源</label>
+                  <button class="btn btn-sm btn-ghost" @click="openWorkFile">在知识库打开</button>
+                </div>
+              </div>
+
+              <div class="wd-body">
+                <textarea v-show="!workRead" v-model="workBody" spellcheck="false" placeholder="写 Markdown…"></textarea>
+                <div class="preview md" v-show="workRead" v-html="md(bodyNoH1(workBody))"></div>
+              </div>
+            </div>
+
+            <div class="work-detail empty" v-else>
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                <div>从左侧选择一条，或点「＋ 新建」</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== WORK · CONVENTIONS ===================== -->
+        <section v-if="view==='work' && workTab==='convention'">
+          <div class="conv-toolbar">
+            <button class="btn btn-sm btn-primary" @click="openWorkCreate">＋ 新建约定</button>
+            <button class="btn btn-sm btn-ghost" @click="openWorkImport">导入</button>
+            <span class="conv-count">共 {{ workItems.length }} 条约定</span>
+          </div>
+          <div class="conv-grid">
+            <div class="conv-card" v-for="it in workItems" :key="it.path">
+              <div class="conv-head">
+                <span class="conv-id" v-if="it.id">{{ it.id }}</span>
+                <span class="badge" :class="it.status === 'archived' ? '' : 'success'">{{ statusLabel(it.status) }}</span>
+              </div>
+              <div class="conv-title">{{ it.title }}</div>
+              <textarea v-if="convEditPath === it.path" class="input conv-edit"
+                        v-model="convDraft" spellcheck="false"></textarea>
+              <div v-else class="conv-body md" v-html="md(bodyNoH1(it.body))"></div>
+              <div class="conv-actions">
+                <template v-if="convEditPath === it.path">
+                  <button class="btn btn-sm btn-primary" @click="saveConv(it.path)">保存</button>
+                  <button class="btn btn-sm btn-ghost" @click="convEditPath = ''">取消</button>
+                </template>
+                <template v-else>
+                  <button class="btn btn-sm btn-ghost" @click="editConv(it)">编辑</button>
+                  <button class="btn btn-sm btn-ghost" @click="openFile(it.path)">原文</button>
+                  <button class="btn btn-sm btn-danger" @click="deleteConv(it)">删除</button>
+                </template>
+              </div>
+            </div>
+            <div v-if="!workItems.length" class="empty-state">还没有约定，点「＋ 新建约定」</div>
+          </div>
+        </section>
+
         <!-- ===================== SETTINGS ===================== -->
         <section v-if="view==='settings'">
           <div class="card" style="max-width:680px;">
@@ -323,7 +573,7 @@
         <h3>新建笔记</h3>
         <div class="field">
           <label>所在目录</label>
-          <input class="input" v-model="newFileDir" placeholder="如 work/247-conversion" />
+          <input class="input" v-model="newFileDir" placeholder="如 work/project-a" />
         </div>
         <div class="field">
           <label>文件名（含 .md）</label>
@@ -332,6 +582,95 @@
         <div class="modal-actions">
           <button class="btn btn-ghost" @click="showNewModal=false">取消</button>
           <button class="btn btn-primary" @click="confirmNewFile">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== WORK · NEW ITEM MODAL ===================== -->
+    <div class="modal-mask" v-if="workNew.show" @click.self="workNew.show = false">
+      <div class="modal">
+        <h3>新建工作项</h3>
+        <div class="field">
+          <label>类型</label>
+          <select class="input" v-model="workNew.type">
+            <option value="requirement">需求</option>
+            <option value="design">设计</option>
+            <option value="dev">开发</option>
+            <option value="bug">Bug</option>
+            <option value="convention">约定</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>标题</label>
+          <input class="input" v-model="workNew.title" @keyup.enter="confirmWorkCreate" placeholder="一句话说清这件事" />
+        </div>
+        <div class="field">
+          <label>项目 / 归属（可留空）</label>
+          <input class="input" v-model="workNew.project" placeholder="如 project-a、2024-重构" />
+        </div>
+        <div class="field">
+          <label>优先级</label>
+          <select class="input" v-model="workNew.priority">
+            <option value="high">高</option>
+            <option value="medium">中</option>
+            <option value="low">低</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" @click="workNew.show = false">取消</button>
+          <button class="btn btn-primary" @click="confirmWorkCreate">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== WORK · IMPORT MODAL ===================== -->
+    <div class="modal-mask" v-if="workImport.show" @click.self="workImport.show = false">
+      <div class="modal modal-wide">
+        <h3>导入历史文档</h3>
+        <div class="field">
+          <label>本地目录（递归扫描 .md / .txt / .docx，只读不删）</label>
+          <div class="imp-dir">
+            <input class="input" v-model="workImport.dir" placeholder="如 E:\3.学习文档\需求文档"
+                   @keyup.enter="scanWorkImport" />
+            <button class="btn btn-primary" @click="scanWorkImport" :disabled="workImport.scanning">
+              {{ workImport.scanning ? '扫描中…' : '扫描' }}
+            </button>
+          </div>
+        </div>
+        <template v-if="workImport.files.length">
+          <div class="field">
+            <label>归档到项目 / 归属（留空进 _inbox，回头再整理）</label>
+            <input class="input" v-model="workImport.project" placeholder="如 project-a" />
+          </div>
+          <div class="field">
+            <label>统一类型</label>
+            <select class="input" v-model="workImport.type">
+              <option value="">按文件名自动判断</option>
+              <option value="requirement">需求</option>
+              <option value="design">设计</option>
+              <option value="dev">开发</option>
+              <option value="bug">Bug</option>
+              <option value="note">笔记</option>
+            </select>
+          </div>
+          <div class="imp-list">
+            <label class="imp-row" v-for="f in workImport.files" :key="f.abs">
+              <input type="checkbox" v-model="workImport.picked[f.abs]" />
+              <span class="imp-name">{{ f.rel }}</span>
+              <span class="badge">{{ typeLabel(f.guess_type) }}</span>
+              <span class="imp-meta">{{ Math.round(f.size / 1024) }} KB</span>
+            </label>
+          </div>
+          <p class="imp-note">原文完整保留在正文，只做结构包裹；同名文件不会覆盖，会自动加序号。</p>
+        </template>
+        <div v-else-if="workImport.scanned" class="empty-state" style="padding:20px 0;">
+          该目录下没有可导入的文档
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" @click="workImport.show = false">取消</button>
+          <button class="btn btn-primary" v-if="workImport.files.length" @click="runWorkImport">
+            导入选中 {{ pickedCount }} 个
+          </button>
         </div>
       </div>
     </div>

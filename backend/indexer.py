@@ -22,6 +22,23 @@ def _title(content: str, rel_path: str) -> str:
     return os.path.basename(rel_path)
 
 
+def index_file(rel_path: str) -> bool:
+    """Index a single Vault file (used after an API write)."""
+    abs_path = os.path.join(vault.vault_root(), rel_path.replace("/", os.sep))
+    if not os.path.isfile(abs_path):
+        return False
+    try:
+        with open(abs_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except (OSError, UnicodeDecodeError):
+        return False
+    rel = rel_path.replace(os.sep, "/")
+    store.upsert_doc(rel, _title(content, rel), content, int(os.path.getmtime(abs_path)))
+    if chroma_client.is_available():
+        chroma_client.index_doc(rel, _title(content, rel), content)
+    return True
+
+
 def reindex() -> dict:
     root = vault.vault_root()
     fts = 0

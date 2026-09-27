@@ -144,9 +144,9 @@ def search_substring(query: str, limit: int = 50):
     """Chinese-friendly fallback.
 
     FTS5's default ``unicode61`` tokenizer does not split CJK text, so short
-    phrases that are not standalone tokens (e.g. 甬兴, 背调) miss. We scan the
-    indexed documents in Python and keep those whose content contains every
-    whitespace-separated term — reliable for any-length CJK substrings.
+    multi-character CJK phrases that are not standalone tokens miss. We scan
+    the indexed documents in Python and keep those whose content contains
+    every whitespace-separated term — reliable for any-length CJK substrings.
     """
     terms = [t for t in re.split(r"\s+", query.strip()) if t]
     if not terms:
