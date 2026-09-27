@@ -118,6 +118,10 @@ SEVERITY_LABEL = {
 
 PROGRESS_HEAD = "## 进展"
 
+# 归档区: 版本收尾后整体拖进 _归档/, 不再进工作区列表 -- 但文件仍在 vault 里,
+# 知识库目录树和全文检索照旧找得到。
+SKIP_TOP_DIRS = {"_归档"}
+
 _FIELDS = (
     "id", "type", "title", "project", "status", "priority", "owner",
     "created", "updated", "tags", "refs", "severity", "verdict",
@@ -145,6 +149,9 @@ def _iter_files():
         dirnames[:] = [
             d for d in dirnames if not d.startswith(".") and d != "__pycache__"
         ]
+        if os.path.normpath(dirpath) == os.path.normpath(root):
+            # 只在 vault/work/ 这一层拦归档区, 子目录里同名的不受影响
+            dirnames[:] = [d for d in dirnames if d not in SKIP_TOP_DIRS]
         for name in filenames:
             if name.startswith(".") or name == "__pycache__":
                 continue

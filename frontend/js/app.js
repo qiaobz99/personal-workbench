@@ -181,6 +181,9 @@
       severityOptions() {
         return this.workMeta.severities || [];
       },
+      /* 分组顺序跟随后端 projects()(版本新→旧: 12版本开发 → 0828 → 0820 → 0818)，
+         不在项目列表里的(_conventions / _inbox / 未归属)沉底。
+         注意：别用 localeCompare 排中文 -- 拼音序会把「12版本开发」甩到最后。 */
       groupedWork() {
         const q = (this.workFilterQ || "").trim().toLowerCase();
         const list = this.workItems.filter((it) => {
@@ -194,9 +197,15 @@
           if (!map.has(key)) map.set(key, []);
           map.get(key).push(it);
         });
+        const order = this.workMeta.projects || [];
+        const rank = (name) => {
+          const i = order.indexOf(name);
+          return i === -1 ? order.length : i;
+        };
         return [...map.entries()]
-          .map(([name, items]) => ({ name, items }))
-          .sort((a, b) => a.name.localeCompare(b.name, "zh"));
+          .map(([name, items]) => ({ name, items, rank: rank(name) }))
+          .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name, "zh"))
+          .map(({ name, items }) => ({ name, items }));
       },
       pickedCount() {
         return Object.values(this.workImport.picked || {}).filter(Boolean).length;
@@ -424,6 +433,7 @@
       },
       async loadWorkItems() {
         const t = this.workType;
+        if (!(this.workMeta.projects || []).length) await this.loadWorkMeta();
         try {
           const d = await api("/api/work/items" + (t ? "?type=" + t : ""));
           this.workItems = d.items || [];
