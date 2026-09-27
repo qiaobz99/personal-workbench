@@ -55,24 +55,34 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow:    0 8px 30px rgba(0, 0, 0, 0.45);
 
+  /* dotted-matrix backdrop — off in dark, overridden in the light theme */
+  --dot: transparent;
+
   --sidebar-w: 248px;
   --topbar-h:  60px;
 }
 
 [data-theme="light"] {
-  --bg:            #f6f7f9;
+  /* Base tone follows the reference dashboard (github.com/oyorf/person_dashboard):
+     a neutral "zinc" family — paper #fafafa / sunken #f4f4f5 / line #ececee —
+     instead of the previous blue-cast greys. The canvas is deliberately a clear
+     step off pure white so the white cards lift off it instead of melting in. */
+  --bg:            #f1f1f3;
   --surface-1:     #ffffff;
-  --surface-2:     #f1f2f5;
-  --surface-3:     #e9eaef;
-  --hover:         #eef0f4;
+  --surface-2:     #ececee;
+  --surface-3:     #e4e4e7;
+  --hover:         #e8e8ea;
 
-  --border:        rgba(10, 12, 20, 0.08);
-  --border-strong: rgba(10, 12, 20, 0.14);
+  --border:        rgba(24, 24, 27, 0.09);
+  --border-strong: rgba(24, 24, 27, 0.16);
 
-  --text:          #15171c;
-  --text-muted:    #565a63;
-  --text-subtle:   #83868f;
-  --text-faint:    #aab;
+  --text:          #18181b;
+  --text-muted:    #52525b;
+  --text-subtle:   #7c7c85;
+  --text-faint:    #a1a1aa;
+
+  /* dotted-matrix backdrop (see body::after) — light theme only */
+  --dot:           rgba(24, 24, 27, 0.14);
 
   --accent:        #5e6ad2;
   --accent-hover:  #4d57c0;
@@ -89,8 +99,16 @@
   --danger-soft:   rgba(217, 67, 67, 0.12);
   --info:          #2d9cdb;
 
-  --shadow-sm: 0 1px 2px rgba(16, 22, 40, 0.06);
-  --shadow:    0 12px 32px rgba(16, 22, 40, 0.10);
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+  --shadow:    0 12px 32px rgba(24, 24, 27, 0.10);
+}
+
+/* Light shell: the chrome shares the canvas tone — the reference project does the
+   same (its sidebar and page both sit on --paper). So no large region is a pure
+   white slab; white is reserved for the cards that should stand out. */
+[data-theme="light"] .sidebar {
+  background: var(--bg);
+  border-right-color: var(--border-strong);
 }
 
 /* ---- reset ---- */
@@ -121,6 +139,20 @@ body::before {
     radial-gradient(700px 400px at 0% 100%, rgba(124,108,240,0.06), transparent 55%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* A whisper of dot matrix so a flat light canvas isn't dead space — same recipe
+   as the reference dashboard (26px grid, masked to fade out from the top-right). */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.6;
+  -webkit-mask-image: radial-gradient(circle at 72% 4%, #000 0%, transparent 62%);
+          mask-image: radial-gradient(circle at 72% 4%, #000 0%, transparent 62%);
 }
 
 /* =========================================================================
@@ -390,7 +422,8 @@ body::before {
 .editor-split.reading .preview { padding: 24px 36px; font-size: 15px; }
 .editor-split textarea {
   border: none; border-radius: 0;
-  background: var(--bg); padding: 16px; font-size: 13px; min-height: 0;
+  background: var(--bg); color: var(--text); caret-color: var(--accent-hover);
+  padding: 16px; font-size: 13px; min-height: 0;
 }
 .editor-split textarea:focus { box-shadow: none; }
 .preview { padding: 16px 20px; overflow-y: auto; min-height: 0; }
