@@ -316,8 +316,9 @@ body::before {
   transition: border-color .15s, transform .1s; cursor: pointer;
 }
 .recent-item:hover { border-color: var(--border-strong); transform: translateX(2px); }
-.recent-item .ri-ico { color: var(--accent-hover); flex: none; }
-.recent-item .ri-name { font-weight: 540; font-size: 13px; }
+.recent-item .ri-ico { color: var(--accent-hover); flex: none; width: 17px; height: 17px; opacity: .85; }
+.recent-item .ri-body { min-width: 0; flex: 1; }
+.recent-item .ri-name { font-weight: 540; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .recent-item .ri-path { font-size: 11.5px; color: var(--text-subtle); font-family: var(--font-mono); }
 .recent-item .ri-time { margin-left: auto; font-size: 11.5px; color: var(--text-faint); }
 
