@@ -138,7 +138,7 @@
       },
       nav(view, root) {
         this.view = view;
-        if (root !== undefined) this.kbRoot = root;
+        this.kbRoot = root || "";
         if (view === "knowledge") this.loadTree();
         if (view === "tasks") this.loadTasks();
         if (view === "reports" && !this.reportData) this.loadReport();

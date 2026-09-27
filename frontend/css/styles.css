@@ -354,8 +354,8 @@ body::before {
 .tree-children { margin-left: 14px; border-left: 1px solid var(--border); padding-left: 4px; }
 .tree-file .tw-ico { color: var(--accent-hover); }
 
-.editor-pane { display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-.editor-tools { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.editor-pane { display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.editor-tools { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .editor-tools .crumb { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin-right: auto; }
 .editor-split { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; }
 .editor-split textarea {
