@@ -84,7 +84,7 @@
         </button>
       </header>
 
-      <div class="content">
+      <div class="content" :class="{ 'kb-view': view==='knowledge' }">
 
         <!-- ===================== DASHBOARD ===================== -->
         <section v-if="view==='dashboard'">
