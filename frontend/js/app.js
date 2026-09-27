@@ -99,6 +99,7 @@
         toastType: "",
         recentFiles: [],
         /* ---- work zone (日常工作) ---- */
+        workNavOpen: false,
         workTab: "overview",
         workItems: [],
         workBoard: {},
@@ -409,6 +410,7 @@
       navWork(tab) {
         this.view = "work";
         this.kbRoot = "";
+        this.workNavOpen = true;
         this.workTab = tab;
         if (tab === "overview") this.loadWorkBoard();
         else this.loadWorkItems();
@@ -455,6 +457,7 @@
           return;
         }
         this.view = "work";
+        this.workNavOpen = true;
         this.workTab = tab;
         this.loadWorkItems().then(() => this.selectWork(it.path));
       },
