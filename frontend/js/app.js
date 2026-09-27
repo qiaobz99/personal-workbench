@@ -76,6 +76,7 @@
         tree: { name: "vault", path: "", type: "dir", children: [] },
         selectedFile: "",
         fileContent: "",
+        editorMode: "read",
         saving: false,
         searchQuery: "",
         searchResults: [],
@@ -204,6 +205,7 @@
           });
           this.showNewModal = false;
           this.newFileName = "";
+          this.editorMode = "edit"; // 新建后直接进入编辑模式
           this.loadTree();
           this.openFile(path);
           this.toast("已创建 " + path, "ok");

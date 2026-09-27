@@ -150,12 +150,16 @@
             <div class="editor-pane" v-if="selectedFile">
               <div class="editor-tools">
                 <span class="crumb">{{ selectedFile }}</span>
+                <div class="seg">
+                  <button :class="{active: editorMode==='read'}" @click="editorMode='read'">阅读</button>
+                  <button :class="{active: editorMode==='edit'}" @click="editorMode='edit'">编辑</button>
+                </div>
                 <button class="btn btn-sm btn-ghost" @click="newFile">＋ 新建</button>
                 <button class="btn btn-sm btn-primary" @click="saveFile" :disabled="saving">保存</button>
                 <button class="btn btn-sm btn-danger" @click="deleteFile">删除</button>
               </div>
-              <div class="editor-split">
-                <textarea v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
+              <div class="editor-split" :class="{ reading: editorMode==='read' }">
+                <textarea v-show="editorMode==='edit'" v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
                 <div class="preview md" v-html="previewHtml"></div>
               </div>
             </div>
