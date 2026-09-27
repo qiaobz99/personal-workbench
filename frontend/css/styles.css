@@ -178,6 +178,29 @@ body::before {
 }
 .nav-item.active svg { color: var(--accent-hover); }
 
+/* ---- 可折叠子菜单（日常工作） ---- */
+.nav-item.nav-parent { padding-right: 6px; }
+.nav-item.nav-parent > span:not(.nav-caret) { flex: 1; min-width: 0; }
+.nav-caret {
+  flex: none; width: 22px; height: 22px; margin-left: auto;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px; color: var(--text-faint); cursor: pointer;
+  transition: transform .18s ease, background .15s ease, color .15s ease;
+}
+.nav-caret svg { width: 12px; height: 12px; }
+.nav-caret:hover { background: var(--hover); color: var(--text); }
+.nav-caret.open { transform: rotate(90deg); }
+
+.nav-children {
+  display: flex; flex-direction: column; gap: 1px;
+  margin: 3px 0 4px 20px; padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+.nav-item.nav-sub { padding: 6px 10px; font-size: 13px; color: var(--text-faint); }
+.nav-item.nav-sub svg { width: 15px; height: 15px; }
+.nav-item.nav-sub:hover { color: var(--text); }
+.nav-item.nav-sub.active { border-color: transparent; color: var(--text); }
+
 .sidebar-foot { margin-top: auto; padding-top: 14px; }
 .semantic-pill {
   display: flex; align-items: center; gap: 8px;
