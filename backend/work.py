@@ -68,9 +68,11 @@ STATUS_FLOW = {
         "backlog", "analyzing", "designing", "dev",
         "testing", "staging", "released", "paused", "dropped",
     ],
-    "design": ["draft", "reviewing", "approved", "archived"],
-    "dev": ["todo", "doing", "blocked", "done"],
-    "bug": ["open", "locating", "fixing", "verifying", "closed", "wontfix"],
+    # released(已上线) 是各类共用的终态: 需求上线后, 同批的设计/开发/Bug 也跟着上线,
+    # 而不是各自"归档/完成/关闭" -- 版本口径要能一眼看出"这个版本发出去了"。
+    "design": ["draft", "reviewing", "approved", "archived", "released"],
+    "dev": ["todo", "doing", "blocked", "done", "released"],
+    "bug": ["open", "locating", "fixing", "verifying", "closed", "wontfix", "released"],
     "convention": ["active", "archived"],
     "note": ["draft", "done"],
 }
