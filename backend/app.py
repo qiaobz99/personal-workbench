@@ -13,6 +13,7 @@ Run:  ``python backend/app.py``  then open  http://localhost:17321
 """
 import json
 import os
+import re
 import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -41,6 +42,30 @@ CONTENT_TYPES = {
     ".ico": "image/x-icon",
     ".map": "application/json",
 }
+
+
+# Cache-busting for local use: an HTML response gets ?v=<mtime> appended to
+# every /css/*.css and /js/*.js reference. Browsers cache static assets hard,
+# so an edited stylesheet used to keep looking identical until a manual hard
+# refresh. The mtime changes the moment a file is saved, so a plain F5 is
+# enough from now on.
+_ASSET_REF_RE = re.compile(
+    rb'((?:href|src)=")(/(?:css|js|vendor)/[^"?#]+[.](?:css|js))(")'
+)
+
+
+def _bust_html(body: bytes) -> bytes:
+    def repl(m):
+        prefix, url, suffix = m.group(1), m.group(2), m.group(3)
+        rel = url.decode("ascii").lstrip("/")
+        path = os.path.normpath(os.path.join(config.FRONTEND_DIR, rel))
+        try:
+            stamp = str(int(os.path.getmtime(path)))
+        except OSError:
+            return m.group(0)
+        return prefix + url + b"?v=" + stamp.encode("ascii") + suffix
+
+    return _ASSET_REF_RE.sub(repl, body)
 
 
 def _send_json(handler, payload, status=200):
@@ -107,6 +132,8 @@ class Handler(BaseHTTPRequestHandler):
         ctype = CONTENT_TYPES.get(ext, "application/octet-stream")
         with open(abs_path, "rb") as f:
             body = f.read()
+        if ext == ".html":
+            body = _bust_html(body)
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
