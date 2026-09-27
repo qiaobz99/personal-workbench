@@ -234,6 +234,10 @@ body::before {
 .content { flex: 1; min-height: 0; overflow-y: auto; padding: 26px; }
 /* 知识库视图自带分栏滚动, 不让外层 content 滚, 否则高度链算错导致预览区滚不动 */
 .content.kb-view { display: flex; flex-direction: column; overflow: hidden; padding: 16px; }
+/* kb-view 下唯一渲染的 section 必须自身成为受约束的 flex 容器,
+   否则 section 被 .preview 内容撑高(min-height:auto), 高度链在它这里断裂,
+   长文档时预览区 overflow-y:auto 永远不触发 → 无法滚动 */
+.content.kb-view > section { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
 /* =========================================================================
    Generic components
@@ -358,6 +362,9 @@ body::before {
 .editor-tools { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .editor-tools .crumb { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin-right: auto; }
 .editor-split { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; }
+/* 阅读模式: 隐藏源码编辑区, 预览占满整块 (两类的选择器优先级高于窄屏断点, 行列定义均生效) */
+.editor-split.reading { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.editor-split.reading .preview { padding: 24px 36px; font-size: 15px; }
 .editor-split textarea {
   border: none; border-right: 1px solid var(--border); border-radius: 0;
   background: var(--bg); padding: 16px; font-size: 13px; min-height: 0;
@@ -487,7 +494,7 @@ body::before {
 @media (max-width: 1080px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .two-col { grid-template-columns: 1fr; }
-  .editor-split { grid-template-columns: 1fr; }
+  .editor-split { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
   .editor-split textarea { border-right: none; border-bottom: 1px solid var(--border); }
 }
 @media (max-width: 760px) {
