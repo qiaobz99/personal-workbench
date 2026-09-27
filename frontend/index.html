@@ -26,7 +26,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
           <span>概览</span>
         </div>
-        <div class="nav-item" :class="{active: view==='knowledge'}" @click="nav('knowledge')">
+        <div class="nav-item" :class="{active: view==='knowledge' && !kbRoot}" @click="nav('knowledge')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h6v16H6a2 2 0 0 0-2 2z"/><path d="M20 5a2 2 0 0 0-2-2h-6v16h6a2 2 0 0 1 2 2z"/></svg>
           <span>知识库</span>
         </div>
@@ -148,17 +148,15 @@
               </div>
             </div>
             <div class="editor-pane" v-if="selectedFile">
-              <div style="grid-column:1 / -1; display:flex; flex-direction:column; height:100%;">
-                <div class="editor-tools">
-                  <span class="crumb">{{ selectedFile }}</span>
-                  <button class="btn btn-sm btn-ghost" @click="newFile">＋ 新建</button>
-                  <button class="btn btn-sm btn-primary" @click="saveFile" :disabled="saving">保存</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteFile">删除</button>
-                </div>
-                <div class="editor-split">
-                  <textarea v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
-                  <div class="preview md" v-html="previewHtml"></div>
-                </div>
+              <div class="editor-tools">
+                <span class="crumb">{{ selectedFile }}</span>
+                <button class="btn btn-sm btn-ghost" @click="newFile">＋ 新建</button>
+                <button class="btn btn-sm btn-primary" @click="saveFile" :disabled="saving">保存</button>
+                <button class="btn btn-sm btn-danger" @click="deleteFile">删除</button>
+              </div>
+              <div class="editor-split">
+                <textarea v-model="fileContent" spellcheck="false" placeholder="开始书写 Markdown…"></textarea>
+                <div class="preview md" v-html="previewHtml"></div>
               </div>
             </div>
             <div class="editor-pane" v-else style="display:grid; place-items:center;">
