@@ -1,3 +1,6 @@
+# ---- personal vault (local-only; your own notes are NEVER committed) ----
+vault/
+
 # ---- runtime artifacts (auto-generated on first run) ----
 data/kb.db
 data/kb.db-*
