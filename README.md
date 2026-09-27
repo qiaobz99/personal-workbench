@@ -13,6 +13,11 @@
 - 🎨 **主题**：深色 / 浅色，Linear 设计美学（近黑底 + 薰衣草蓝强调色 + 发丝级边框）
 - 🧩 **完全离线**：不联网、不进云，零依赖，数据自持
 
+## 🔒 隐私 / Privacy
+
+你的笔记只存在于本机 `vault/` 目录，**不会被提交到 Git**（`.gitignore` 已排除）。
+仓库里只有代码和 `vault.sample/` 示例内容 —— 公开分享代码时，不会泄露任何个人数据。
+
 ## 🏗️ 架构 / Architecture
 
 ```
@@ -40,7 +45,12 @@ python backend/app.py
 http://localhost:8080
 ```
 
-首次启动会自动建立全文索引。
+首次启动会自动建立全文索引。仓库自带 `vault.sample/` 示例内容，可先复制成你的 `vault/`：
+
+```bash
+cp -r vault.sample vault        # macOS / Linux
+xcopy vault.sample vault /E /I  # Windows
+```
 
 ## 🧠 启用语义检索（可选）/ Semantic Search (optional)
 
@@ -70,7 +80,8 @@ local-kb-workbench/
 │   ├── css/styles.css       # Linear 风格主题
 │   ├── js/app.js            # 全部前端逻辑
 │   └── vendor/              # vue.global.prod.js, marked.umd.js
-├── vault/                   # 你的知识库（Markdown，随便加）
+├── vault/                   # 你的私人知识库（Markdown）— 已 gitignore，永不提交
+├── vault.sample/            # 示例知识库（首次可复制为 vault/）
 ├── data/                    # 运行时生成（db / log），已 gitignore
 ├── start.bat / start.sh     # 一键启动
 └── README.md

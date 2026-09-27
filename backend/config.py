@@ -11,7 +11,9 @@ BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 
 # The Vault is the single source of truth: a tree of Markdown files.
+# Kept OUT of git on purpose (see .gitignore): your notes stay local-only.
 VAULT_DIR = os.environ.get("KB_VAULT", os.path.join(PROJECT_ROOT, "vault"))
+os.makedirs(VAULT_DIR, exist_ok=True)
 
 # Runtime data (SQLite DB, optional Chroma index). Not committed to git.
 DATA_DIR = os.environ.get("KB_DATA", os.path.join(PROJECT_ROOT, "data"))
