@@ -1,0 +1,15 @@
+# ---- runtime artifacts (auto-generated on first run) ----
+data/kb.db
+data/kb.db-*
+data/server.log
+data/nodecheck/
+
+# ---- python ----
+__pycache__/
+*.pyc
+*.pyo
+
+# ---- editors / OS ----
+.idea/
+.vscode/
+.DS_Store
