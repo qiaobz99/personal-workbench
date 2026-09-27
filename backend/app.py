@@ -24,6 +24,7 @@ import store
 import vault
 import indexer
 import report
+import work
 import chroma_client
 
 # --------------------------------------------------------------------------
@@ -69,6 +70,14 @@ def _read_body(handler):
         return json.loads(raw.decode("utf-8"))
     except (ValueError, UnicodeDecodeError):
         return {}
+
+
+def _reindex_file(rel_path: str):
+    """Refresh the full-text/semantic index for one Vault file after a write."""
+    try:
+        indexer.index_file(rel_path)
+    except Exception:  # noqa: BLE001 - indexing must never break a write
+        pass
 
 
 # --------------------------------------------------------------------------
@@ -174,6 +183,42 @@ class Handler(BaseHTTPRequestHandler):
             stats = indexer.reindex()
             return _send_json(self, stats)
 
+        # ---- Work Zone ---------------------------------------------------
+        if action == "work/meta":
+            return _send_json(self, work.meta())
+        if action == "work/board":
+            return _send_json(self, work.board())
+        if action == "work/items":
+            return _send_json(
+                self,
+                {
+                    "items": work.list_items(
+                        type=params.get("type") or None,
+                        project=params.get("project") or None,
+                        status=params.get("status") or None,
+                        q=params.get("q") or None,
+                    )
+                },
+            )
+        if action == "work/item":
+            rel = params.get("path") or ""
+            if not rel:
+                return _send_json(self, {"error": "path required"}, 400)
+            try:
+                return _send_json(self, work.load(rel))
+            except FileNotFoundError:
+                return _send_json(self, {"error": "not found"}, 404)
+            except ValueError as e:
+                return _send_json(self, {"error": str(e)}, 400)
+        if action == "work/conventions":
+            return _send_json(self, {"items": work.list_items(type="convention")})
+        if action == "work/progress":
+            try:
+                days = int(params.get("days") or 7)
+            except ValueError:
+                days = 7
+            return _send_json(self, work.progress(days))
+
         return _send_json(self, {"error": "unknown action"}, 404)
 
     # -- HTTP verbs --------------------------------------------------------
@@ -230,12 +275,73 @@ class Handler(BaseHTTPRequestHandler):
         if action == "reindex":
             return _send_json(self, indexer.reindex())
 
+        # ---- Work Zone ---------------------------------------------------
+        if action == "work/item":
+            try:
+                item = work.create(
+                    type=body.get("type", "note"),
+                    title=body.get("title", ""),
+                    project=body.get("project", ""),
+                    priority=body.get("priority", "medium"),
+                    tags=body.get("tags", ""),
+                    status=body.get("status") or None,
+                    severity=body.get("severity", ""),
+                    verdict=body.get("verdict", ""),
+                )
+            except (ValueError, OSError) as e:
+                return _send_json(self, {"error": str(e)}, 400)
+            _reindex_file(item["path"])
+            return _send_json(self, item, 201)
+
+        if action == "work/import/scan":
+            try:
+                return _send_json(self, work.scan_import_dir(body.get("dir", "")))
+            except (ValueError, OSError) as e:
+                return _send_json(self, {"error": str(e)}, 400)
+
+        if action == "work/import":
+            try:
+                res = work.import_files(
+                    files=body.get("files") or [],
+                    project=body.get("project", ""),
+                    type=body.get("type") or None,
+                )
+            except (ValueError, OSError) as e:
+                return _send_json(self, {"error": str(e)}, 400)
+            for it in res.get("items", []):
+                _reindex_file(it["path"])
+            return _send_json(self, res)
+
         return _send_json(self, {"error": "unknown action"}, 404)
 
     def do_PUT(self):
         parsed = urllib.parse.urlparse(self.path)
         parts = parsed.path[len("/api/") :].rstrip("/").split("/")
         body = _read_body(self)
+
+        if parts and parts[0] == "work":
+            if len(parts) > 1 and parts[1] == "item":
+                rel = body.get("path") or ""
+                if not rel:
+                    return _send_json(self, {"error": "path required"}, 400)
+                fields = {
+                    k: body[k]
+                    for k in (
+                        "title", "project", "status", "priority", "owner",
+                        "tags", "refs", "severity", "verdict",
+                    )
+                    if k in body
+                }
+                try:
+                    item = work.update(rel, fields=fields, body=body.get("body"))
+                except FileNotFoundError:
+                    return _send_json(self, {"error": "not found"}, 404)
+                except (ValueError, OSError) as e:
+                    return _send_json(self, {"error": str(e)}, 400)
+                _reindex_file(item["path"])
+                return _send_json(self, item)
+            return _send_json(self, {"error": "unknown action"}, 404)
+
         if parts and parts[0] == "tasks" and len(parts) > 1:
             try:
                 tid = int(parts[1])
@@ -258,6 +364,17 @@ class Handler(BaseHTTPRequestHandler):
                 return _send_json(self, {"error": "bad id"}, 400)
             ok = store.delete_task(tid)
             return _send_json(self, {"ok": ok})
+        if parts and parts[0] == "work" and len(parts) > 1 and parts[1] == "item":
+            p = (params.get("path") or [""])[0]
+            if not p:
+                return _send_json(self, {"error": "path required"}, 400)
+            ok = work.delete(p)
+            if ok:
+                store.delete_doc(p)
+                if chroma_client.is_available():
+                    chroma_client.delete_doc(p)
+            return _send_json(self, {"ok": ok})
+
         if parts and parts[0] == "file":
             p = (params.get("path") or [""])[0]
             if not p:

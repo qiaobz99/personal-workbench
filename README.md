@@ -9,6 +9,7 @@
 - 📚 **知识库**：浏览 / 编辑 Markdown，实时预览，Vault 即仓库
 - 🔍 **检索**：SQLite FTS5 全文检索（命中高亮 + 摘要），可选 Chroma 语义检索（混合排序）
 - 🗂️ **任务看板**：拖拽流转 待办 / 进行中 / 已完成
+- 🧭 **日常工作**：需求 → 设计 → 开发 → Bug 一条链；状态流转自动写入文件内时间线；约定卡片墙；历史文档（含 .docx）批量导入
 - 📝 **日报 / 周报**：基于文件变更与任务统计自动生成
 - 🎨 **主题**：深色 / 浅色，Linear 设计美学（近黑底 + 薰衣草蓝强调色 + 发丝级边框）
 - 🧩 **完全离线**：不联网、不进云，零依赖，数据自持
@@ -33,6 +34,41 @@
 ```
 
 **索引链路参考**：语义 + 词汇混合检索 + MMR 重排（借鉴 Second Brain 的设计），Chroma 缺失时自动降级为纯 FTS5 全文。
+
+## 🧭 日常工作 / Work Zone
+
+**一套文件，两种视图**：知识库按目录树看这些文件，日常工作按「工作项」看同一批文件。给 Markdown 加一层很轻的 frontmatter 就够了，不新造一份数据。
+
+```
+vault/work/
+├── _conventions/                  # 工作约定与纪律（卡片墙）
+├── _inbox/                        # 导入后的待整理区
+└── <project>/                     # 一个项目 / 业务线一个目录
+    ├── req/REQ-001-xxx.md         # 需求
+    ├── design/DES-001-xxx.md      # 设计
+    ├── dev/DEV-001-xxx.md         # 开发
+    └── bug/BUG-001-xxx.md         # Bug（正文只留「原因」「方案」）
+```
+
+侧边栏「日常工作」下六个子菜单：**总览 / 需求 / 设计 / 开发 / Bug / 约定**，每个子菜单就是按 `type` 过滤同一批文件。
+
+- **进度留在文件里**：状态变动自动往正文的 `## 进展` 追加一行带时间戳的记录，数据库丢了进度还在，换台机器拷走 `vault/` 也还在。
+- **需求 → 设计 → 开发 → Bug 是一条链**：用 `refs` / `project` 串起来，不是四份孤立数据。
+- **历史导入**：填一个本地目录即可递归扫描 `.md / .txt / .docx`（docx 用标准库 `zipfile` + `xml.etree` 直接解析，不需要 python-docx），原文完整保留在正文，同名不覆盖。
+
+API 一览（与现有 `/api/*` 同一套 `_api` 分发）：
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/work/board` | 日常工作聚合（进行中 / 卡点 / 本周进展） |
+| GET | `/api/work/items?type=&project=&status=&q=` | 工作项列表 |
+| GET | `/api/work/item?path=` | 单个工作项（字段 + 正文 + 时间线） |
+| POST | `/api/work/item` | 新建（自动编号 + 模板 + 骨架） |
+| PUT | `/api/work/item` | 更新字段 / 正文（**状态变更自动追加时间线**） |
+| DELETE | `/api/work/item?path=` | 删除 |
+| POST | `/api/work/import/scan` | 扫描本地目录（只读，出候选列表） |
+| POST | `/api/work/import` | 批量导入 |
+| GET | `/api/work/meta` | 类型 / 状态机 / 枚举（供前端渲染） |
 
 ## 🚀 快速开始 / Quick Start
 
@@ -73,6 +109,7 @@ local-kb-workbench/
 │   ├── store.py             # SQLite FTS5 索引 + 任务看板
 │   ├── vault.py             # Vault 读写
 │   ├── indexer.py           # 增量 / 全量索引
+│   ├── work.py              # 日常工作：frontmatter 解析 / 工作项 / 时间线 / 导入
 │   ├── report.py            # 日报 / 周报聚合
 │   └── chroma_client.py     # 可选语义检索适配器
 ├── frontend/                # 零构建 Vue 前端

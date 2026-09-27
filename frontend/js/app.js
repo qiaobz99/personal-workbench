@@ -98,6 +98,27 @@
         toastMsg: "",
         toastType: "",
         recentFiles: [],
+        /* ---- work zone (日常工作) ---- */
+        workTab: "overview",
+        workItems: [],
+        workBoard: {},
+        workMeta: {},
+        workSel: "",
+        workItem: null,
+        workBody: "",
+        workRead: true,
+        workSaving: false,
+        workFilterQ: "",
+        workTitle: "",
+        workProject: "",
+        workTags: "",
+        convEditPath: "",
+        convDraft: "",
+        workNew: { show: false, type: "requirement", title: "", project: "", priority: "medium" },
+        workImport: {
+          show: false, dir: "", files: [], project: "", type: "",
+          picked: {}, scanning: false, scanned: false,
+        },
         _toastTimer: null,
         _searchTimer: null,
       };
@@ -118,15 +139,85 @@
           search: "检索",
           tasks: "任务看板",
           reports: "日报 / 周报",
+          work: "日常工作",
           settings: "设置",
         }[this.view] || "";
       },
       crumb() {
         if (this.view === "knowledge" && this.kbRoot) return this.kbRoot;
+        if (this.view === "work" && this.workTab !== "overview") return this.workTabLabel;
         return "";
+      },
+      /* 知识库与工作台(列表+详情)共用「自身分栏滚动」的布局; 总览/约定页正常整页滚动 */
+      kbViewClass() {
+        if (this.view === "knowledge") return true;
+        if (this.view === "work") {
+          return !["overview", "convention"].includes(this.workTab);
+        }
+        return false;
+      },
+      workTabLabel() {
+        return {
+          overview: "总览", requirement: "需求", design: "设计",
+          dev: "开发", bug: "Bug", convention: "约定",
+        }[this.workTab] || "";
+      },
+      /* 子菜单 = 同一批文件按 type 过滤 */
+      workType() {
+        return ["requirement", "design", "dev", "bug", "convention"].includes(this.workTab)
+          ? this.workTab : null;
+      },
+      workKindChips() {
+        const c = this.workBoard.counts || {};
+        return [
+          { type: "requirement", label: "需求", count: c.requirement || 0 },
+          { type: "design", label: "设计", count: c.design || 0 },
+          { type: "dev", label: "开发", count: c.dev || 0 },
+          { type: "bug", label: "Bug", count: c.bug || 0 },
+          { type: "convention", label: "约定", count: c.convention || 0 },
+        ];
+      },
+      severityOptions() {
+        return this.workMeta.severities || [];
+      },
+      groupedWork() {
+        const q = (this.workFilterQ || "").trim().toLowerCase();
+        const list = this.workItems.filter((it) => {
+          if (!q) return true;
+          return [it.title, it.id, it.project, (it.tags || []).join(" ")]
+            .join(" ").toLowerCase().includes(q);
+        });
+        const map = new Map();
+        list.forEach((it) => {
+          const key = it.project || "未归属";
+          if (!map.has(key)) map.set(key, []);
+          map.get(key).push(it);
+        });
+        return [...map.entries()]
+          .map(([name, items]) => ({ name, items }))
+          .sort((a, b) => a.name.localeCompare(b.name, "zh"));
+      },
+      pickedCount() {
+        return Object.values(this.workImport.picked || {}).filter(Boolean).length;
       },
       previewHtml() {
         return MD(this.fileContent || "");
+      },
+      openTasks() {
+        return this.tasks.filter((t) => t.status !== "done");
+      },
+      /* 分区视图(如 AI 学习)只显示该子目录的文件树, 顶层的"知识库"入口仍显示全库 */
+      displayTree() {
+        if (!this.kbRoot) return this.tree;
+        const find = (n) => {
+          if (n.path === this.kbRoot) return n;
+          for (const c of n.children || []) {
+            const hit = find(c);
+            if (hit) return hit;
+          }
+          return null;
+        };
+        return find(this.tree) || this.tree;
       },
     },
     methods: {
@@ -143,6 +234,8 @@
         if (view === "knowledge") this.loadTree();
         if (view === "tasks") this.loadTasks();
         if (view === "reports" && !this.reportData) this.loadReport();
+        // 每次回到概览都重新拉取, 保证任务数与待办列表是最新的
+        if (view === "dashboard") { this.loadStats(); this.loadTasks(); }
       },
       /* ---- tree / files ---- */
       async loadTree() {
@@ -287,6 +380,214 @@
           );
         } catch (e) { this.toast("生成报告失败", "err"); }
       },
+      /* ---- 日常工作 (work zone) ---- */
+      typeLabel(t) {
+        return {
+          requirement: "需求", design: "设计", dev: "开发",
+          bug: "Bug", convention: "约定", note: "笔记",
+        }[t] || t;
+      },
+      statusLabel(s) {
+        return (this.workMeta.status_label || {})[s] || s;
+      },
+      statusOptions(type) {
+        return ((this.workMeta.status_flow || {})[type] || []);
+      },
+      severityLabel(s) {
+        const hit = (this.workMeta.severities || []).find((x) => x.value === s);
+        return hit ? hit.label : s;
+      },
+      statusBadge(s) {
+        if (["released", "closed", "done", "approved"].includes(s)) return "success";
+        if (["dev", "fixing", "doing", "testing", "staging", "verifying", "locating"].includes(s)) return "warn";
+        if (["paused", "blocked", "dropped", "wontfix"].includes(s)) return "danger";
+        return "";
+      },
+      workTabForType(t) {
+        return ["requirement", "design", "dev", "bug", "convention"].includes(t) ? t : "overview";
+      },
+      navWork(tab) {
+        this.view = "work";
+        this.kbRoot = "";
+        this.workTab = tab;
+        if (tab === "overview") this.loadWorkBoard();
+        else this.loadWorkItems();
+      },
+      async loadWorkMeta() {
+        try { this.workMeta = await api("/api/work/meta"); } catch (e) {}
+      },
+      async loadWorkBoard() {
+        try { this.workBoard = await api("/api/work/board"); }
+        catch (e) { this.toast("加载日常工作失败", "err"); }
+      },
+      async loadWorkItems() {
+        const t = this.workType;
+        try {
+          const d = await api("/api/work/items" + (t ? "?type=" + t : ""));
+          this.workItems = d.items || [];
+          if (this.workSel && !this.workItems.some((i) => i.path === this.workSel)) {
+            this.workSel = ""; this.workItem = null; this.workBody = "";
+          }
+        } catch (e) { this.toast("加载工作项失败", "err"); }
+      },
+      applyWork(it) {
+        this.workItem = it;
+        this.workSel = it.path;
+        this.workBody = it.body || "";
+        this.workTitle = it.title || "";
+        this.workProject = it.project || "";
+        this.workTags = (it.tags || []).join(", ");
+      },
+      async selectWork(path) {
+        try {
+          this.applyWork(await api("/api/work/item?path=" + encodeURIComponent(path)));
+          this.workRead = true;
+        } catch (e) { this.toast("打开失败", "err"); }
+      },
+      /* 从总览点某条 → 跳到它所属的子菜单并选中 */
+      openWork(it) {
+        const tab = this.workTabForType(it.type);
+        this.kbRoot = "";
+        if (tab === "overview") {
+          // 笔记类条目没有对应子菜单, 直接在知识库里打开原文
+          this.openFile(it.path);
+          this.toast("笔记类条目已在知识库中打开", "");
+          return;
+        }
+        this.view = "work";
+        this.workTab = tab;
+        this.loadWorkItems().then(() => this.selectWork(it.path));
+      },
+      openWorkCreate() {
+        this.workNew.type = this.workType || "requirement";
+        this.workNew.show = true;
+      },
+      async confirmWorkCreate() {
+        const n = this.workNew;
+        const title = (n.title || "").trim();
+        if (!title) { this.toast("请输入标题", "err"); return; }
+        try {
+          const it = await apiJson("/api/work/item", "POST", {
+            type: n.type, title: title, project: (n.project || "").trim(), priority: n.priority,
+          });
+          n.show = false;
+          n.title = "";
+          const tab = this.workTabForType(it.type);
+          if (tab !== "overview") this.workTab = tab;
+          await this.loadWorkItems();
+          this.applyWork(it);
+          this.workRead = false;
+          this.toast("已创建 " + it.id, "ok");
+        } catch (e) { this.toast("创建失败", "err"); }
+      },
+      async saveWorkFields(fields) {
+        if (!this.workItem) return;
+        this.workSaving = true;
+        try {
+          const payload = Object.assign({ path: this.workItem.path }, fields || {});
+          const it = await apiJson("/api/work/item", "PUT", payload);
+          this.applyWork(it);
+          this.loadWorkItems();
+          if (this.workTab === "overview") this.loadWorkBoard();
+          if (fields && fields.status) {
+            this.toast("状态已流转到「" + this.statusLabel(it.status) + "」", "ok");
+          }
+        } catch (e) { this.toast("保存失败", "err"); }
+        finally { this.workSaving = false; }
+      },
+      setWorkStatus(s) { this.saveWorkFields({ status: s }); },
+      saveWorkTitle() {
+        const v = (this.workTitle || "").trim();
+        if (!v || !this.workItem || v === this.workItem.title) return;
+        this.saveWorkFields({ title: v });
+      },
+      async saveWorkBody() {
+        if (!this.workItem) return;
+        this.workSaving = true;
+        try {
+          this.applyWork(await apiJson("/api/work/item", "PUT", {
+            path: this.workItem.path, body: this.workBody,
+          }));
+          this.toast("正文已保存", "ok");
+        } catch (e) { this.toast("保存失败", "err"); }
+        finally { this.workSaving = false; }
+      },
+      async deleteWork() {
+        if (!this.workItem) return;
+        const label = this.workItem.id || this.workItem.path;
+        if (!window.confirm("确认删除 " + label + " ？此操作会删除对应的 Markdown 文件。")) return;
+        try {
+          await api("/api/work/item?path=" + encodeURIComponent(this.workItem.path), { method: "DELETE" });
+          this.workSel = ""; this.workItem = null; this.workBody = "";
+          this.loadWorkItems();
+          this.toast("已删除 " + label, "ok");
+        } catch (e) { this.toast("删除失败", "err"); }
+      },
+      openWorkFile() {
+        if (this.workItem) this.openFile(this.workItem.path);
+      },
+      /* 卡片展示时去掉正文首行 H1（标题已单独渲染，避免重复） */
+      bodyNoH1(t) {
+        return (t || "").replace(/^\s*#\s+[^\n]*(\r?\n)?/, "");
+      },
+      /* 约定卡片: 就地编辑 */
+      editConv(it) { this.convEditPath = it.path; this.convDraft = it.body || ""; },
+      async saveConv(path) {
+        try {
+          await apiJson("/api/work/item", "PUT", { path: path, body: this.convDraft });
+          this.convEditPath = "";
+          this.loadWorkItems();
+          this.toast("已保存", "ok");
+        } catch (e) { this.toast("保存失败", "err"); }
+      },
+      async deleteConv(it) {
+        if (!window.confirm("确认删除 " + (it.id || it.title) + " ？")) return;
+        try {
+          await api("/api/work/item?path=" + encodeURIComponent(it.path), { method: "DELETE" });
+          this.loadWorkItems();
+          this.toast("已删除", "ok");
+        } catch (e) { this.toast("删除失败", "err"); }
+      },
+      /* 历史文档导入 */
+      openWorkImport() {
+        this.workImport.show = true;
+        this.workImport.scanned = false;
+      },
+      async scanWorkImport() {
+        const w = this.workImport;
+        const dir = (w.dir || "").trim();
+        if (!dir) { this.toast("请填写目录路径", "err"); return; }
+        w.scanning = true;
+        w.scanned = false;
+        try {
+          const d = await apiJson("/api/work/import/scan", "POST", { dir: dir });
+          w.files = d.files || [];
+          const picked = {};
+          w.files.forEach((f) => { picked[f.abs] = true; });
+          w.picked = picked;
+          this.toast("扫描到 " + d.count + " 个文件", "ok");
+        } catch (e) {
+          w.files = []; w.picked = {};
+          this.toast("扫描失败：请检查目录是否存在", "err");
+        } finally {
+          w.scanning = false;
+          w.scanned = true;
+        }
+      },
+      async runWorkImport() {
+        const w = this.workImport;
+        const files = (w.files || []).filter((f) => w.picked[f.abs]).map((f) => f.abs);
+        if (!files.length) { this.toast("请勾选要导入的文件", "err"); return; }
+        try {
+          const d = await apiJson("/api/work/import", "POST", {
+            files: files, project: (w.project || "").trim(), type: w.type || "",
+          });
+          w.show = false; w.files = []; w.picked = {}; w.scanned = false;
+          this.toast("已导入 " + d.count + " 个文件", "ok");
+          this.loadWorkItems();
+          this.loadWorkBoard();
+        } catch (e) { this.toast("导入失败", "err"); }
+      },
       /* ---- config / stats ---- */
       async loadConfig() {
         try { this.config = await api("/api/config"); } catch (e) {}
@@ -321,6 +622,8 @@
       this.loadStats();
       this.loadTree();
       this.loadTasks();
+      this.loadWorkMeta();
+      this.loadWorkBoard();
     },
   };
 
