@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Local KB Workbench · 本地知识库工作台</title>
-  <link rel="stylesheet" href="/css/styles.css" />
+  <title>KB Workbench · 本地知识库工作台</title>
+  <!-- 静态资源带版本号：否则浏览器缓存旧 app.js，会出现"新 HTML 配旧 JS"的半崩状态
+       （2026-10-18 实际踩过：徽标缺数字、日记页空白）。改这两个文件时同步改 ?v= 值 -->
+  <link rel="stylesheet" href="/css/styles.css?v=20261018" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%235e6ad2'/><text x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>K</text></svg>" />
 </head>
 <body>
@@ -34,13 +36,13 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <span>检索</span>
         </div>
+        <div class="nav-item" :class="{active: view==='chat'}" @click="nav('chat')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>
+          <span>AI 问答</span>
+        </div>
         <div class="nav-item" :class="{active: view==='tasks'}" @click="nav('tasks')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="10" y="3" width="5" height="18" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></svg>
           <span>任务看板</span>
-        </div>
-        <div class="nav-item" :class="{active: view==='reports'}" @click="nav('reports')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
-          <span>日报 / 周报</span>
         </div>
 
         <div class="nav-item nav-parent" :class="{active: view==='work'}" @click="navWork('overview')">
@@ -78,6 +80,21 @@
           </div>
         </div>
 
+        <div class="nav-item" :class="{active: view==='diary'}" @click="navDiary()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 14h3M8 17h6"/></svg>
+          <span>金融日记</span>
+        </div>
+
+        <div class="nav-item" :class="{active: view==='dreport'}" @click="navDreport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+          <span>日报 / 周报</span>
+        </div>
+
+        <div class="nav-item" :class="{active: view==='reports'}" @click="nav('reports')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>
+          <span>日志</span>
+        </div>
+
         <div class="nav-label">知识分区</div>
         <div class="nav-item" :class="{active: view==='knowledge' && kbRoot==='learn/ai'}" @click="nav('knowledge','learn/ai')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>
@@ -85,7 +102,7 @@
         </div>
         <div class="nav-item" :class="{active: view==='knowledge' && kbRoot==='interview'}" @click="nav('knowledge','interview')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-          <span>面试准备</span>
+          <span>未来准备</span>
         </div>
 
         <div class="nav-label">系统</div>
@@ -119,10 +136,10 @@
         </button>
       </header>
 
-      <div class="content" :class="{ 'kb-view': kbViewClass }">
+      <div class="content" :class="{ 'kb-view': kbViewClass, 'split-view': view==='diary' || view==='dreport' }">
 
         <!-- ===================== DASHBOARD ===================== -->
-        <section v-if="view==='dashboard'">
+        <section v-if="view==='dashboard'" class="dash">
           <p class="greeting">{{ greeting }} 👋</p>
           <p class="greeting-sub">{{ stats.today }} · 你的本地知识库与工作台一切就绪</p>
 
@@ -180,7 +197,7 @@
                 <div class="quick-btn" @click="nav('knowledge')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> 新建笔记</div>
                 <div class="quick-btn" @click="nav('search')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> 检索知识</div>
                 <div class="quick-btn" @click="nav('tasks')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></svg> 管理任务</div>
-                <div class="quick-btn" @click="nav('reports')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M9 13h6M9 17h6"/></svg> 生成周报</div>
+                <div class="quick-btn" @click="navDreport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M9 13h6M9 17h6"/></svg> 写日报 / 周报</div>
               </div>
             </div>
           </div>
@@ -238,6 +255,48 @@
                 <span class="r-path">{{ r.path }}</span>
               </div>
               <div class="r-snip md" v-html="r.snippet || '(无摘要)'"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== AI 问答 (RAG) ===================== -->
+        <section v-if="view==='chat'">
+          <div class="chat-wrap">
+            <div class="chat-head">
+              <!-- 2026-10-18：删「AI 问答 · 基于你的笔记」标题（与左侧菜单重复）；
+                   范围下拉靠右不动，答案来源说明在下方空状态里已有 -->
+              <select class="input chat-scope" v-model="chatScope">
+                <option value="">全库</option>
+                <option value="learn/ai">AI 学习</option>
+                <option value="interview">未来准备</option>
+              </select>
+            </div>
+            <div class="chat-list" ref="chatList">
+              <div v-if="!chatMessages.length" class="empty-state">
+                问点什么吧 —— 例如「Agent 面试一般会问哪些问题？」<br/>
+                答案只依据你的笔记，并标注引用来源 [1][2]。
+              </div>
+              <div v-for="(m,i) in chatMessages" :key="i" class="chat-msg" :class="m.role">
+                <div class="chat-bubble">
+                  <div v-if="m.role==='assistant'" class="md chat-md" v-html="md(m.text)"></div>
+                  <div v-else class="chat-user-text">{{ m.text }}</div>
+                </div>
+                <div v-if="m.sources && m.sources.length" class="chat-sources">
+                  <span class="src-label">来源：</span>
+                  <span class="src-chip" v-for="(s,j) in m.sources" :key="s.path" @click="openChatSource(s)">{{ j+1 }}. {{ s.title }}</span>
+                </div>
+              </div>
+              <div v-if="chatBusy" class="chat-msg assistant">
+                <div class="chat-bubble chat-typing">思考中…</div>
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <textarea class="input chat-input" v-model="chatInput" @keydown.enter.exact.prevent="sendChat" placeholder="输入问题，Enter 发送（Shift+Enter 换行）"></textarea>
+              <button class="btn btn-primary" :disabled="chatBusy || !chatInput.trim()" @click="sendChat">发送</button>
+            </div>
+            <div v-if="config.llm && !config.llm.configured" class="chat-warn">
+              尚未配置大模型（当前供应商：{{ config.llm.provider }}）。
+              <a href="#" @click.prevent="nav('settings')">前往「设置」填写 API Key</a> 后即可启用。
             </div>
           </div>
         </section>
@@ -308,7 +367,7 @@
 
           <div v-if="reportData" class="card">
             <p class="card-title">
-              {{ reportType==='daily' ? '每日报告' : '每周报告' }} ·
+              {{ reportType==='daily' ? '日志 · 每日' : '日志 · 每周' }} ·
               {{ reportType==='daily' ? reportData.date : (reportData.week_start + ' ~ ' + reportData.week_end) }}
             </p>
 
@@ -334,10 +393,10 @@
 
         <!-- ===================== WORK · OVERVIEW ===================== -->
         <section v-if="view==='work' && workTab==='overview'">
-          <p class="greeting">日常工作</p>
-          <p class="greeting-sub">需求 → 设计 → 开发 → Bug 一条链走完，进度留在文件里</p>
-
-          <div class="stat-grid">
+          <!-- 2026-10-18：删掉页面大标题「日常工作」+ 副标题 —— 左侧菜单已标明当前页面，
+               顶栏也有 pageTitle，内容区再挂一遍同标题属于重复（用户反馈"脱裤子放屁"）。
+               原 greeting-sub 提供的 22px 间距改由 stat-grid 的 margin-top 承担 -->
+          <div class="stat-grid" style="margin-top:22px;">
             <div class="stat-card feature">
               <div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>
               <div class="stat-num">{{ workBoard.active_count || 0 }}</div>
@@ -544,6 +603,190 @@
           </div>
         </section>
 
+        <!-- ===================== DIARY · 金融日记 ===================== -->
+        <section v-if="view==='diary'">
+          <!-- 顶部容器：日期条 + 篇数浮窗（浮窗 absolute 锚定本容器，不占版面）
+               2026-10-18 定版形态（按方案图）：年份只管年份；月份只约束浮窗范围；
+               「打开日期」date input 保留（一步跳到任意日，含没写过的）；
+               篇数独立成可点击徽标，点开浮窗看目录、点条目跳转该日期。
+               注：中途试过把 date input 换成「日」下拉，已按用户要求回到本形态 -->
+          <div class="diary-top">
+            <div class="diary-bar">
+              <div class="db-field" v-if="diaryYears.length">
+                <label>年份</label>
+                <select class="input db-sel" v-model="diaryYear" @change="selectDiaryYear(diaryYear)">
+                  <option v-for="y in diaryYears" :key="y.year" :value="y.year">{{ y.year }} 年</option>
+                </select>
+              </div>
+              <div class="db-field" v-if="diaryYears.length">
+                <label>月份</label>
+                <select class="input db-sel db-sel-sm" v-model.number="diaryMonth" @change="selectDiaryMonth(diaryMonth)">
+                  <option :value="-1">全部</option>
+                  <option v-for="m in 12" :key="m" :value="m-1">{{ m }} 月</option>
+                </select>
+              </div>
+              <button class="db-count" type="button" :class="{on: diaryListOpen}"
+                      :title="'查看' + diaryRangeLabel + '的日记目录'" @click="toggleDiaryList">
+                {{ diaryRangeLabel }} · {{ diaryRangeCount }} 篇
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="db-field">
+                <label>打开日期</label>
+                <input type="date" class="input db-date" v-model="diaryPick" @change="onDiaryPick" />
+              </div>
+              <div class="db-nav">
+                <button class="btn btn-sm btn-ghost" @click="diaryStepDay(-1)" title="前一天">‹ 前一天</button>
+                <button class="btn btn-sm btn-primary" @click="diaryToday">今天</button>
+                <button class="btn btn-sm btn-ghost" @click="diaryStepDay(1)" title="后一天">后一天 ›</button>
+              </div>
+            </div>
+
+            <!-- 篇数浮窗：只列当前「年 + 月」范围的日记（倒序），点条目跳转该日期 -->
+            <div class="diary-pop" v-if="diaryListOpen">
+              <div class="dp-head">
+                <span>{{ diaryRangeLabel }}的日记 · {{ diaryRangeCount }} 篇</span>
+                <span class="dp-esc">Esc 关闭</span>
+              </div>
+              <div class="dp-list" v-if="diaryPopList.length">
+                <button class="dp-row" v-for="e in diaryPopList" :key="e.date"
+                        :class="{cur: e.date === diarySel}" @click="jumpDiary(e.date)">
+                  <span class="dp-date">{{ e.date.slice(5) }}</span>
+                  <span class="dp-title">{{ e.label }}</span>
+                </button>
+              </div>
+              <div class="dp-none" v-else>{{ diaryRangeLabel }}还没有日记，点「今天」写下第一篇</div>
+            </div>
+          </div>
+
+          <div class="diary-wrap">
+            <div class="diary-edit" v-if="diarySel">
+              <div class="wd-head">
+                <div class="wd-head-main">
+                  <input class="wd-title" v-model="diaryTitle" @change="saveDiary" placeholder="标题（留空用日期）" />
+                </div>
+                <div class="wd-actions">
+                  <div class="seg">
+                    <button :class="{ active: diaryRead }" @click="diaryRead = true">阅读</button>
+                    <button :class="{ active: !diaryRead }" @click="diaryRead = false">编辑</button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" @click="saveDiary" :disabled="diarySaving">保存</button>
+                  <button class="btn btn-sm btn-danger" v-if="diaryItem.exists" @click="deleteDiary">删除</button>
+                </div>
+              </div>
+
+              <div class="wd-f">
+                <label>标签</label>
+                <input class="input" v-model="diaryTags" @change="saveDiary" placeholder="逗号分隔，如 基金, 复盘, 美股" />
+              </div>
+
+              <div class="wd-body">
+                <textarea v-show="!diaryRead" v-model="diaryBody" spellcheck="false" placeholder="写点什么…（支持 Markdown）"></textarea>
+                <div class="preview md" v-show="diaryRead" v-html="md(bodyNoH1(diaryBody))"></div>
+              </div>
+            </div>
+
+            <div class="diary-edit empty" v-else>
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+                <div>点「今天」，开始写这一天的日记</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== DREPORT · 日报/周报（手动主观） ===================== -->
+        <section v-if="view==='dreport'">
+          <!-- 查询条件条：与「金融日记」同一套 —— 类型 / 年份 / 月份 / 打开日期 / 前后翻页 / 筛选 -->
+          <div class="diary-bar">
+            <div class="db-field">
+              <label>类型</label>
+              <div class="seg">
+                <button :class="{active: dreportKind==='daily'}" @click="setDreportKind('daily')">日报</button>
+                <button :class="{active: dreportKind==='weekly'}" @click="setDreportKind('weekly')">周报</button>
+              </div>
+            </div>
+            <!-- 年份 / 月份 / 筛选：只在这一年有记录时才出现（没记录时它们既选不了也没信息） -->
+            <div class="db-field" v-if="dreportEntryList.length">
+              <label>年份</label>
+              <select class="input db-sel" v-model="dreportYear" @change="selectDreportYear(dreportYear)">
+                <option v-for="y in dreportYears" :key="y.year" :value="y.year">{{ y.year }} 年 · {{ y.count }} 篇</option>
+              </select>
+            </div>
+            <div class="db-field" v-if="dreportKind==='daily' && dreportEntryList.length">
+              <label>月份</label>
+              <select class="input db-sel db-sel-sm" v-model.number="dreportMonth">
+                <option :value="-1">全部</option>
+                <option v-for="m in 12" :key="m" :value="m-1">{{ m }} 月</option>
+              </select>
+            </div>
+            <div class="db-field">
+              <label>{{ dreportKind==='daily' ? '打开日期' : '打开周' }}</label>
+              <input type="date" class="input db-date" v-model="dreportPick" @change="onDreportPick" />
+            </div>
+            <div class="db-nav">
+              <button class="btn btn-sm btn-ghost" @click="dreportStep(-1)"
+                      :title="dreportKind==='daily' ? '前一天' : '上一周'">‹ 前{{ dreportKind==='daily' ? '一天' : '一周' }}</button>
+              <button class="btn btn-sm btn-primary" @click="dreportNow">{{ dreportKind==='daily' ? '今天' : '本周' }}</button>
+              <button class="btn btn-sm btn-ghost" @click="dreportStep(1)"
+                      :title="dreportKind==='daily' ? '后一天' : '下一周'">后{{ dreportKind==='daily' ? '一天' : '一周' }} ›</button>
+            </div>
+            <div class="db-field db-search" v-if="dreportEntryList.length">
+              <label>筛选</label>
+              <span class="db-search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input class="input" v-model.trim="dreportFilter" placeholder="标题关键词…" />
+              </span>
+            </div>
+            <span class="db-sum" v-if="dreportEntryList.length">{{ dreportStats }}</span>
+          </div>
+
+          <!-- 结果条：只放标题；正在看的那篇不在此重复 -->
+          <div class="diary-hits" v-if="dreportChips.length">
+            <button class="dh-chip" v-for="c in dreportChips" :key="c.key"
+                    :title="c.tip" @click="openDreportKey(c.key)">
+              <span class="dh-t">{{ c.label }}</span>
+            </button>
+          </div>
+          <div class="diary-hits is-empty" v-else-if="!dreportHits.length">
+            <span class="dh-none">{{ dreportFilter ? '没有匹配的记录' : '还没有记录，点「' + (dreportKind==='daily' ? '今天' : '本周') + '」写下第一篇' }}</span>
+          </div>
+
+          <div class="diary-wrap">
+            <div class="diary-edit" v-if="dreportSel">
+              <div class="wd-head">
+                <div class="wd-head-main">
+                  <input class="wd-title" v-model="dreportTitle" @change="saveDreport" placeholder="标题（留空用日期/周）" />
+                </div>
+                <div class="wd-actions">
+                  <div class="seg">
+                    <button :class="{ active: dreportRead }" @click="dreportRead = true">阅读</button>
+                    <button :class="{ active: !dreportRead }" @click="dreportRead = false">编辑</button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" @click="saveDreport" :disabled="dreportSaving">保存</button>
+                  <button class="btn btn-sm btn-danger" v-if="dreportItem.exists" @click="deleteDreport">删除</button>
+                </div>
+              </div>
+
+              <div class="wd-f">
+                <label>标签</label>
+                <input class="input" v-model="dreportTags" @change="saveDreport" placeholder="逗号分隔，如 项目A, 复盘" />
+              </div>
+
+              <div class="wd-body">
+                <textarea v-show="!dreportRead" v-model="dreportBody" spellcheck="false" placeholder="写点什么…（支持 Markdown）"></textarea>
+                <div class="preview md" v-show="dreportRead" v-html="md(bodyNoH1(dreportBody))"></div>
+              </div>
+            </div>
+
+            <div class="diary-edit empty" v-else>
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+                <div>选择上方日期（周报取该周），或点「今天 / 本周」开始写</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- ===================== SETTINGS ===================== -->
         <section v-if="view==='settings'">
           <div class="card" style="max-width:680px;">
@@ -564,10 +807,63 @@
               <button class="btn btn-primary btn-sm" @click="reindex" :disabled="reindexing">重建索引</button>
             </div>
           </div>
+
+          <div class="card" style="max-width:680px; margin-top:16px;">
+            <p class="card-title">AI 模型（RAG 问答）</p>
+            <p class="cfg-intro">
+              配置「AI 问答」使用的大模型。保存后<strong>立即生效</strong>，无需重启服务。
+              四个供应商都走 OpenAI 兼容协议，切换只需改这里；Key 只保存在本机数据库中。
+            </p>
+
+            <div class="cfg-row">
+              <label class="cfg-label">供应商</label>
+              <div class="cfg-body">
+                <select class="input" v-model="llmForm.provider" @change="onLlmProviderChange">
+                  <option v-for="p in llmSettings.providers" :key="p.id" :value="p.id">{{ llmProviderLabel(p.id) }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="cfg-row">
+              <label class="cfg-label">API Key</label>
+              <div class="cfg-body">
+                <input class="input" type="password" autocomplete="off" v-model="llmForm.api_key" :placeholder="llmKeyPlaceholder" />
+                <p class="cfg-note" v-if="llmNeedsKey">留空表示不修改已保存的 Key；界面上永远不会显示完整 Key。</p>
+                <p class="cfg-note" v-else>当前供应商是本地 Ollama，无需 API Key。</p>
+              </div>
+            </div>
+
+            <div class="cfg-row">
+              <label class="cfg-label">模型名</label>
+              <div class="cfg-body">
+                <input class="input" v-model="llmForm.model" :placeholder="llmDefaultModel || '默认模型'" />
+                <p class="cfg-note">留空使用该供应商的默认模型<span v-if="llmDefaultModel">：{{ llmDefaultModel }}</span>。</p>
+              </div>
+            </div>
+
+            <div class="cfg-row">
+              <label class="cfg-label">Base URL</label>
+              <div class="cfg-body">
+                <input class="input" v-model="llmForm.base_url" placeholder="留空使用官方默认地址" />
+                <p class="cfg-note">只有自建网关 / 代理时才需要填写。</p>
+              </div>
+            </div>
+
+            <p class="cfg-note" v-if="llmSourceNote" style="margin:0 0 12px;">{{ llmSourceNote }}</p>
+
+            <div class="cfg-actions">
+              <button class="btn btn-primary btn-sm" @click="saveLlm" :disabled="llmSaving || llmTesting">{{ llmSaving ? "保存中…" : "保存" }}</button>
+              <button class="btn btn-ghost btn-sm" @click="testLlm" :disabled="llmSaving || llmTesting">{{ llmTesting ? "测试中…" : "测试连接" }}</button>
+              <span class="cfg-badge" :class="llmSettings.configured ? 'ok' : 'warn'">{{ llmSettings.configured ? "已就绪" : "未配置" }}</span>
+              <span class="cfg-eff" v-if="llmSettings.configured">{{ llmSettings.provider }} · {{ llmSettings.model }}</span>
+            </div>
+            <p class="cfg-note" :class="{'ok': llmTestOk, 'err': !llmTestOk}" v-if="llmTestMsg" style="margin:10px 0 0;">{{ llmTestMsg }}</p>
+          </div>
+
           <div class="card" style="max-width:680px; margin-top:16px;">
             <p class="card-title">关于</p>
             <p style="color:var(--text-muted); font-size:13px; margin:0;">
-              本地优先（local-first）的知识库 + 工作台。Vault（Markdown）为唯一真相源，后端零依赖（Python 标准库），
+              本地优先的知识库 + 工作台。Vault（Markdown）为唯一真相源，后端零依赖（Python 标准库），
               FTS5 全文检索，可选 Chroma 语义检索。完全离线、数据自持，适合自用与作为 AI 应用作品集。
             </p>
           </div>
@@ -689,6 +985,6 @@
 
   <script src="/vendor/vue.global.prod.js"></script>
   <script src="/vendor/marked.umd.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="/js/app.js?v=20261018c"></script>
 </body>
 </html>

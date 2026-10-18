@@ -1,13 +1,15 @@
 @echo off
-REM Local KB Workbench â€” Windows start script
-REM åŒå‡»å³å¯å¯åŠ¨ï¼›é¦–æ¬¡è¿è¡Œä¼šè‡ªåŠ¨å»ºç«‹å…¨æ–‡ç´¢å¼•ã€‚
+REM KB Workbench - Windows start script
+REM Ë«»÷¼´¿ÉÆô¶¯£»Ê×´ÎÔËÐÐ»á×Ô¶¯½¨Á¢È«ÎÄË÷Òý¡£
 cd /d "%~dp0"
 if not defined KB_PORT set KB_PORT=17321
+REM ÖªÊ¶¿âÊý¾ÝÒÑÇ¨ÖÁ E:\4¸öÈËÖªÊ¶¿â\vault£¨2026-10-17£©
+if not defined KB_VAULT set KB_VAULT=E:\4¸öÈËÖªÊ¶¿â\vault
 echo.
-echo   Local KB Workbench å¯åŠ¨ä¸­ ...
-echo   æ‰“å¼€æµè§ˆå™¨è®¿é—®:  http://localhost:%KB_PORT%
-echo   ï¼ˆæ¢ç«¯å£: å…ˆ set KB_PORT=9001 å†è¿è¡Œæœ¬è„šæœ¬ï¼‰
-echo   ï¼ˆæŒ‰ Ctrl+C åœæ­¢æœåŠ¡ï¼‰
+echo   KB Workbench Æô¶¯ÖÐ ...
+echo   ´ò¿ªä¯ÀÀÆ÷·ÃÎÊ:  http://localhost:%KB_PORT%
+echo   £¨»»¶Ë¿Ú: ÏÈ set KB_PORT=9001 ÔÙÔËÐÐ±¾½Å±¾£©
+echo   £¨°´ Ctrl+C Í£Ö¹·þÎñ£©
 echo.
 python backend/app.py
 pause

@@ -1,6 +1,6 @@
-# Local KB Workbench
+# KB Workbench
 
-> 本地优先（local-first）的**个人知识库 + 工作台** · 完全离线 · 数据自持 · 零外部依赖
+> 本地优先的**个人知识库 + 工作台** · 完全离线 · 数据自持 · 零外部依赖
 
 一个面向个人知识管理与 AI 应用作品集的本地工具。Markdown Vault 作为唯一真相源，后端零依赖（Python 标准库），前端零构建（Vue 3 本地 vendored），数据完全留在你自己的机器上。可作为日常知识管理工具，也可作为 **AI 应用面试作品集样例**。
 
@@ -84,12 +84,44 @@ http://localhost:17321
 > 端口默认 **17321**（刻意避开 3000 / 5000 / 8000 / 8080 / 8888 这些被各种开发工具抢占的端口）。
 > 要换端口：设环境变量 `KB_PORT` 即可，如 `KB_PORT=9001 python backend/app.py`。
 
+### 📁 数据位置（2026-10-17 起）
+
+Vault 已从仓库内移到 **`E:\4个人知识库\vault`**，代码仍在本目录。解析顺序：
+
+```
+KB_VAULT 环境变量  >  <仓库>/vault（旧位置，若存在）  >  E:\4个人知识库\vault
+```
+
+`start.bat` / `start.sh` 已内置 `KB_VAULT=E:\4个人知识库\vault`；直接 `python backend/app.py` 也能自动落到新位置。
+同级还有 `E:\4个人知识库\workbody\`（历史产物）和 `E:\4个人知识库\04员工开发知识库\`（原始底稿）。
+
+
 首次启动会自动建立全文索引。仓库自带 `vault.sample/` 示例内容，可先复制成你的 `vault/`：
 
 ```bash
 cp -r vault.sample vault        # macOS / Linux
 xcopy vault.sample vault /E /I  # Windows
 ```
+
+## 🤖 配置大模型 / LLM Setup
+
+工作台内置 RAG 问答（左侧「AI 问答」）。**打开「设置 → AI 模型」即可配置，保存后立即生效**，不用改代码、不用重启服务。
+
+| 字段 | 说明 |
+|---|---|
+| 供应商 | `DeepSeek`（默认）、`通义千问 Qwen`、`OpenAI`、`Ollama` |
+| API Key | 对应供应商控制台申请；只存本机数据库，界面永不回显完整值（只显示 `sk-a****xyz`） |
+| 模型名 | 留空用该供应商默认（`deepseek-chat` / `qwen-plus` / `gpt-4o-mini` / `qwen2.5:7b`） |
+| Base URL | 仅自建网关 / 代理时才需要填写 |
+
+四个供应商都走 OpenAI 兼容协议（`/v1/chat/completions`），所以**换供应商只是在下拉里切换**；
+Key 与模型名**按供应商分别保存**，切来切去不会串配置。配好后点「测试连接」可当场验证是否可用。
+
+想零成本试用？选 **Ollama**，先装好 [Ollama](https://ollama.com) 并 `ollama pull qwen2.5:7b`，
+完全离线、不需要任何 Key。
+
+> **部署场景**想统一锁定配置：设环境变量 `KB_LLM_PROVIDER` / `KB_LLM_KEY` / `KB_LLM_MODEL` / `KB_LLM_BASE_URL`。
+> 环境变量**优先级高于设置页**；设置页会显示每一项的生效来源，方便排查「页面改了却不生效」。
 
 ## 🧠 启用语义检索（可选）/ Semantic Search (optional)
 
@@ -108,8 +140,10 @@ pip install chromadb sentence-transformers
 local-kb-workbench/
 ├── backend/                 # Python 标准库后端（零依赖）
 │   ├── app.py               # HTTP 服务 + JSON API
-│   ├── config.py            # 配置
-│   ├── store.py             # SQLite FTS5 索引 + 任务看板
+│   ├── config.py            # 路径 / 端口等基础配置
+│   ├── settings.py          # 可在「设置页」修改的配置（大模型供应商 / Key / 模型）
+│   ├── llm.py               # OpenAI 兼容大模型客户端（DeepSeek / Qwen / OpenAI / Ollama）
+│   ├── store.py             # SQLite FTS5 索引 + 任务看板 + meta 键值
 │   ├── vault.py             # Vault 读写
 │   ├── indexer.py           # 增量 / 全量索引
 │   ├── work.py              # 日常工作：frontmatter 解析 / 工作项 / 时间线 / 导入
@@ -139,10 +173,10 @@ Python 3.8+ · SQLite FTS5 · Chroma (optional) · Vue 3 · marked · 零构建
 
 ## 🤝 适用场景 / Use Cases
 
-- 个人知识沉淀（工作笔记、学习、面试准备）
+- 个人知识沉淀（工作笔记、学习、未来准备）
 - 本地离线工作台（检索 / 看板 / 周报）
-- AI 应用方向的项目作品集（面试可讲解：local-first 架构、FTS5 + 向量混合检索、零依赖设计）
+- AI 应用方向的项目作品集（面试可讲解：本地优先架构、FTS5 + 向量混合检索、零依赖设计）
 
 ---
 
-*Local-first knowledge base & workbench. Fully offline, data stays on your machine.*
+*Offline-first knowledge base & workbench. Fully offline, data stays on your machine.*

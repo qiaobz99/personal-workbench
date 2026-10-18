@@ -34,7 +34,7 @@ def _read(rel: str) -> str:
 
 
 def daily_report(date: str = None) -> dict:
-    """``date`` is ``YYYY-MM-DD``; defaults to today (local)."""
+    """``date`` is ``YYYY-MM-DD``; defaults to today (system clock)."""
     if not date:
         date = datetime.date.today().isoformat()
     day = datetime.date.fromisoformat(date)

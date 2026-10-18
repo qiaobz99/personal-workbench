@@ -15,10 +15,26 @@ _DOC_EXT = (".md", ".markdown", ".txt")
 
 
 def _title(content: str, rel_path: str) -> str:
+    """Best available human title: front-matter ``title:`` then first heading.
+
+    Vault notes usually open with YAML front-matter and their first Markdown
+    heading is a sub-section ("## 基本信息"), which is useless both in the UI
+    list and as a retrieval signal, so front-matter wins when it is present.
+    """
+    head = content[:2000]
+    fm = re.match(r"^---\s*\n(.*?)\n---\s*\n", head, re.S)
+    if fm:
+        for line in fm.group(1).splitlines():
+            if line.strip().lower().startswith("title:"):
+                t = line.split(":", 1)[1].strip().strip("\"'").strip()
+                if t:
+                    return t
     for line in content.splitlines():
         line = line.strip()
         if line.startswith("#"):
-            return line.lstrip("#").strip()
+            t = line.lstrip("#").strip()
+            if t:
+                return t
     return os.path.basename(rel_path)
 
 

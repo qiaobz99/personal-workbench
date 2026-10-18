@@ -3,9 +3,9 @@ title: 欢迎使用
 tags: [示例]
 ---
 
-# 欢迎使用 Local KB Workbench 👋
+# 欢迎使用 KB Workbench 👋
 
-这是一个 **local-first** 的个人知识库与工作台：所有内容都是你机器上的纯 Markdown 文件，完全离线、数据自持。
+这是一个 **本地优先** 的个人知识库与工作台：所有内容都是你机器上的纯 Markdown 文件，完全离线、数据自持。
 
 ## 试试这些
 

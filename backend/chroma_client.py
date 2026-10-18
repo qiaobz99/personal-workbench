@@ -1,6 +1,6 @@
 """Optional semantic search layer backed by Chroma.
 
-This module is **strictly optional**. If ``chromadb`` (and a local embedding
+This module is **strictly optional**. If ``chromadb`` (and an on-disk embedding
 model) is not installed, every function here degrades gracefully: the rest of
 the application keeps working with FTS5 full-text search only.
 

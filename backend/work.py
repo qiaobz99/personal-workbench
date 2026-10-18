@@ -747,7 +747,7 @@ def read_docx_text(abs_path: str) -> str:
 
 
 def scan_import_dir(dir_path: str, max_files: int = 500):
-    """List importable documents under a local directory (read-only)."""
+    """List importable documents under a directory on this machine (read-only)."""
     if not dir_path or not str(dir_path).strip():
         raise ValueError("请填写目录路径")
     root = os.path.abspath(os.path.expanduser(str(dir_path).strip()))
